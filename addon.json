@@ -6,7 +6,7 @@
         "fileVersion" : "v0.1a",
         "releaseTag" : "v0.1a",
         "unicode" : "⛄",
-        "description" : "Adds hotkeys to swap between input modes. To switch to keyboard mode, press ALT+NUMPAD4. For mouse mode, press ALT+NUMPAD6",
+        "description" : "Adds hotkeys to swap between input modes. To switch to keyboard mode, press ALT+NUMPAD4. For mouse mode, press ALT+NUMPAD6.",
         "tags" : [
             "input",
             "mouse",
