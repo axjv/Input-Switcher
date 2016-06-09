@@ -3,8 +3,8 @@
         "name" : "Input Switcher",
         "file" : "inputswitcher",
         "extension" : "ipf",
-        "fileVersion" : "v0.1a",
-        "releaseTag" : "v0.1a",
+        "fileVersion" : "v0.1b",
+        "releaseTag" : "v0.1b",
         "unicode" : "⛄",
         "description" : "Adds hotkeys to swap between input modes. To switch to keyboard mode, press ALT+NUMPAD4. For mouse mode, press ALT+NUMPAD6.",
         "tags" : [
