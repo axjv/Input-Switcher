@@ -1,7 +1,7 @@
 [
     {
         "name" : "Input Switcher",
-        "file" : "inputswitcher",
+        "file" : "inputswitch",
         "extension" : "ipf",
         "fileVersion" : "v0.1b",
         "releaseTag" : "v0.1b",
