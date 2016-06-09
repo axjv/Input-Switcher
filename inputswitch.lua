@@ -1,20 +1,32 @@
+local acutil = require('acutil');
 function INPUTSWITCH_ON_INIT(addon, frame)
-	frame:ShowWindow(1);
-	frame:RunUpdateScript("INPUT_UPDATE", 0, 0, 0, 1);
+	acutil.slashCommand('/inputswitch',parse);
+	ui.SysMsg("Input switcher loaded! To use, type /inputswitch.")
+end 
+function INPUTSWITCH(x)
+	if (x == 0) then
+		config.ChangeXMLConfig("ControlMode", 2);
+		session.config.SetMouseMode(false);
+		UPDATE_CONTROL_MODE()
+	elseif (x == 1) then 
+		config.ChangeXMLConfig("ControlMode", 3);
+		session.config.SetMouseMode(true);
+		UPDATE_CONTROL_MODE()
+	end
+	return 0;
 end
 
-function INPUT_UPDATE(frame)
-
-	if keyboard.IsKeyPressed("LALT") == 1 then
-		if keyboard.IsKeyPressed("NUMPAD4") == 1 then
-			config.ChangeXMLConfig("ControlMode", 2);
-			session.config.SetMouseMode(false);
-			UPDATE_CONTROL_MODE()
-		elseif keyboard.IsKeyPressed("NUMPAD6") == 1 then 
-			config.ChangeXMLConfig("ControlMode", 3);
-			session.config.SetMouseMode(true);
-			UPDATE_CONTROL_MODE()
-		end
+function parse(command)
+	local cmd = table.remove(command,1);
+	if (cmd == 'kb') then
+		INPUTSWITCH(0)
+		return ui.SysMsg('Keyboard mode enabled.');
 	end
-	return 1;
+	if (cmd == 'mouse') then
+		INPUTSWITCH(1)
+		return ui.SysMsg('Mouse mode enabled.')
+	end
+	if (not cmd) then
+		return ui.SysMsg('Type /inputswitch kb to enable keyboard, or /inputswitch mouse to enable mouse.')
+	end
 end
