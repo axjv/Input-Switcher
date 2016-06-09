@@ -6,7 +6,7 @@
         "fileVersion" : "v0.1b",
         "releaseTag" : "v0.1b",
         "unicode" : "⛄",
-        "description" : "Adds hotkeys to swap between input modes. To switch to keyboard mode, press ALT+NUMPAD4. For mouse mode, press ALT+NUMPAD6.",
+        "description" : "Adds hotkeys to swap between input modes. Type /inputswitch in game for more details.",
         "tags" : [
             "input",
             "mouse",
