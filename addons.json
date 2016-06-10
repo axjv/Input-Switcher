@@ -8,11 +8,11 @@
 		"unicode" : "⛄",
 		"description" : "Adds hotkeys to swap between input modes. Type /inputswitch in game for more details.",
 		"tags" : [
-			"input",
-			"mouse",
-			"keyboard",
-			"mode",
-			"setting"
+				"input",
+				"mouse",
+				"keyboard",
+				"mode",
+				"setting"
 		]
 	}
 ]
