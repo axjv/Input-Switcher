@@ -3,8 +3,8 @@
 		"name" : "Input Switcher",
 		"file" : "inputswitch",
 		"extension" : "ipf",
-		"fileVersion" : "v0.3.0",
-		"releaseTag" : "v0.3.0",
+		"fileVersion" : "v1.0.0",
+		"releaseTag" : "v1.0.0",
 		"unicode" : "⛄",
 		"description" : "Adds hotkeys to swap between input modes. Type /inputswitch in game for more details.",
 		"tags" : [
