@@ -1,7 +1,11 @@
 local acutil = require('acutil');
+local loaded = 0
 function INPUTSWITCH_ON_INIT(addon, frame)
-	acutil.slashCommand('/inputswitch',parse);
-	ui.SysMsg("Input switcher loaded! To use, type /inputswitch.")
+	if (loaded == 0) then
+		acutil.slashCommand('/inputswitch',parse);
+		ui.SysMsg("Input switcher loaded! To use, type /inputswitch.")
+		loaded = 1
+	end
 end 
 function INPUTSWITCH(x)
 	if (x == 0) then
