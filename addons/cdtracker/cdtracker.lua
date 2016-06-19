@@ -25,11 +25,11 @@ iconSlots = {}
 local screenWidth = ui.GetClientInitialWidth();
 local screenHeight = ui.GetClientInitialHeight();
 
-function cdLoadSettings()
+function cdTracker_LoadSettings()
 	local s, err = acutil.loadJSON("../addons/cdtracker/settings.json");
 	if err then
 		settings = default
-		cdSaveSettings()
+		cdTracker_SaveSettings()
 	else
 		settings = s
 		for k,v in pairs(default) do
@@ -40,30 +40,30 @@ function cdLoadSettings()
 	end
 end
 
-function cdSaveSettings()
+function cdTracker_SaveSettings()
 	acutil.saveJSON("../addons/cdtracker/settings.json", settings);
 end
 
-function setVal(command)
+function cdTracker_SetVal(command)
 	local cmd = table.remove(command,1);
 	if (type(tonumber(cmd)) == "number") then
 		settings.checkVal = tonumber(cmd)
-		cdSaveSettings()
+		cdTracker_SaveSettings()
 		return CHAT_SYSTEM('CD alert set to '..cmd..' seconds.')
 	end
 	if (cmd == 'on') then
 		settings.alerts = 1
-		cdSaveSettings()
+		cdTracker_SaveSettings()
 		return CHAT_SYSTEM('CD alerts on.');
 		end
 	if (cmd == 'off') then
 		settings.alerts = 0
-		cdSaveSettings()
+		cdTracker_SaveSettings()
 		return CHAT_SYSTEM('CD alerts off.')
 	end
 	if (cmd == 'sound') then
 		settings.sound = not settings.sound
-		cdSaveSettings()
+		cdTracker_SaveSettings()
 		if settings.sound == 1 then
 			return CHAT_SYSTEM('CD ready sound on.')
 		else
@@ -75,8 +75,8 @@ end
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
-	acutil.slashCommand('/cd',setVal)
-	cdLoadSettings()
+	acutil.slashCommand('/cd',cdTracker_SetVal)
+	cdTracker_LoadSettings()
 end
 	
 function ICON_USE_HOOKED(object, reAction)
@@ -141,9 +141,9 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			iconSlots[tostring(FIND_NEXT_SLOT(iconSlots,fullName))] = 0
 			counter = counter - 1
 			if counter == 0 then
-				for k,v in pairs(queue) do
-					ui.DestroyFrame('SKILL_FRAME_'..v)
-				end
+				-- for k,v in pairs(queue) do
+					-- ui.DestroyFrame('SKILL_FRAME_'..v)
+				-- end
 				offset = 0
 			end
 			queue[fullName] = -1
@@ -156,7 +156,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
 		oldVal[fullName] = cdCheck
 		if queue[fullName] == -1 and cdCheck > 0 then
-			if FIND_NEXT_SLOT(iconSlots,0) == 0 then
+			if FIND_NEXT_SLOT(iconSlots,0) == nil then
 				iconSlots[tostring(counter)] = fullName
 				queue[fullName] = counter
 			else
@@ -177,12 +177,19 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 end
 
 function FIND_NEXT_SLOT(slotArr, searchVal)
+	local minK = 9999
 	for k,v in pairs(slotArr) do
 		if v == searchVal then
-			return k;
+			if tonumber(k) < tonumber(minK) then
+				minK = k
+			end
 		end
 	end
-	return 0;
+	if tonumber(minK) < 9999 then
+		return minK
+	else
+		return nil;
+	end
 end
 
 function DRAW_READY_ICON(obj,duration,iconPos,sizex,sizey)
