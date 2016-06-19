@@ -72,6 +72,7 @@ function cdTracker_SetVal(command)
 			if type(tonumber(soundVal)) == 'number' then
 				settings.soundtype = math.floor(tonumber(soundVal))
 				cdTracker_SaveSettings()
+				imcSound.PlaySoundEvent(soundTypes[settings.soundtype])
 				return CHAT_SYSTEM('Sound type set to '..settings.soundtype..'.')
 			end
 			return CHAT_SYSTEM('Invalid sound value.')
@@ -110,7 +111,11 @@ function cdTracker_SetVal(command)
 	end
 	if cmd == 'status' then
 		CHAT_SYSTEM(' ')
-		CHAT_SYSTEM('CD Switcher: '..settings.alerts)
+		if settings.alerts == 0 then
+			CHAT_SYSTEM('CD Switcher: off')
+		else
+			CHAT_SYSTEM('CD Switcher: on')
+		end
 		if settings.icon == 0 then
 			CHAT_SYSTEM('Icon: off')
 		else
