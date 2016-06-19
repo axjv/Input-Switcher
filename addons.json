@@ -22,7 +22,7 @@
 		"fileVersion" : "v1.0.1",
 		"releaseTag" : "apple",
 		"unicode" : "⛄",
-		"description" : "A convenient way to view your skill cooldowns. Commands: /cd on, /cd off, /cd <seconds>, /cd sound",
+		"description" : "A convenient way to view your skill cooldowns. Type /cd in game for a list of commands.",
 		"tags" : [
 			"cooldown",
 			"timer",
