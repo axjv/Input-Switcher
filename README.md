@@ -14,7 +14,9 @@ Quickly swap between mouse and keyboard modes.
 
 * /inputswitch toggle
 
-#### cdtracker - Alerts for skill cooldowns. Text, audio, and visual notifications supported.
+#### cdtracker
+
+Alerts for skill cooldowns. Text, audio, and visual notifications supported.
 
 * /cd <number> 
 
