@@ -14,7 +14,7 @@
 			"mode",
 			"setting"
 		]
-	}
+	},
 	{
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
