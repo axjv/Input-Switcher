@@ -1,5 +1,5 @@
 # Input Switcher and more
-Addons for Tree of Savior
+Addons for Tree of Savior.
 
 
 ## Addons
@@ -26,9 +26,15 @@ Sets how many seconds cooldown to be notified.
 
 Enables/disables addon.
 
+* /cd icon
+* /cd text
 * /cd sound
 
-Toggles sound.
+Toggles icon, text, and sound.
+
+* /cd sound <number>
+
+Sets the alert sound.
 
 # Download
 
