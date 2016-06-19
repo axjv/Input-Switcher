@@ -1,11 +1,11 @@
 local acutil = require('acutil');
-local loaded = 0
 
-acutil.slashCommand('/inputswitch',parse);
 ui.SysMsg("Input switcher loaded! To use, type /inputswitch.")
+function INPUTSWITCH_ON_INIT(addon, frame)
+	acutil.slashCommand('/inputswitch',inputSwitch_parse);
+end
 
-
-function parse(command)
+function inputSwitch_parse(command)
 	local cmd = table.remove(command,1);
 	if (cmd == 'kb') then
 		config.ChangeXMLConfig("ControlMode", 2);
@@ -27,7 +27,5 @@ function parse(command)
 		UPDATE_CONTROL_MODE();
 		return ui.SysMsg('Mouse mode enabled.')
 	end
-	if (not cmd) then
-		return ui.SysMsg('Type /inputswitch kb to enable keyboard, /inputswitch mouse to enable mouse, or /inputswitch toggle to toggle.')
-	end
+	return ui.SysMsg('Type /inputswitch kb to enable keyboard, /inputswitch mouse to enable mouse, or /inputswitch toggle to toggle.')
 end

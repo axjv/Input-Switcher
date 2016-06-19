@@ -4,6 +4,9 @@ local default = {
 	checkVal = 5;
 	alerts = 1;
 	sound = 1;
+	text = 1;
+	soundtype = 1;
+	icon = 1;
 	}
 	
 local skillName = ' '
@@ -21,6 +24,8 @@ local skillCd = {}
 skillFrame = {}
 iconFrame = {}
 iconSlots = {}
+soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
+
 
 local screenWidth = ui.GetClientInitialWidth();
 local screenHeight = ui.GetClientInitialHeight();
@@ -62,14 +67,78 @@ function cdTracker_SetVal(command)
 		return CHAT_SYSTEM('CD alerts off.')
 	end
 	if (cmd == 'sound') then
-		settings.sound = not settings.sound
-		cdTracker_SaveSettings()
+		local soundVal = table.remove(command,1)
+		if soundVal ~= nil then
+			if type(tonumber(soundVal)) == 'number' then
+				settings.soundtype = math.floor(tonumber(soundVal))
+				cdTracker_SaveSettings()
+				return CHAT_SYSTEM('Sound type set to '..settings.soundtype..'.')
+			end
+			return CHAT_SYSTEM('Invalid sound value.')
+		end
 		if settings.sound == 1 then
-			return CHAT_SYSTEM('CD ready sound on.')
+			settings.sound = 0
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Sound off.')
 		else
-			return CHAT_SYSTEM('CD ready sound off.')
+			settings.sound = 1
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Sound on.')
 		end
 	end
+	if (cmd == 'icon') then
+		if settings.icon == 1 then
+			settings.icon = 0
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Icon off.')
+		else
+			settings.icon = 1
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Icon on.')
+		end
+	end
+	if (cmd == 'text') then
+		if settings.text == 1 then
+			settings.text = 0
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Text off.')
+		else
+			settings.text = 1
+			cdTracker_SaveSettings()
+			return CHAT_SYSTEM('Text on.')
+		end
+	end
+	if cmd == 'status' then
+		CHAT_SYSTEM(' ')
+		CHAT_SYSTEM('CD Switcher: '..settings.alerts)
+		if settings.icon == 0 then
+			CHAT_SYSTEM('Icon: off')
+		else
+			CHAT_SYSTEM('Icon: on')
+		end
+		if settings.text == 0 then
+			CHAT_SYSTEM('Text: off')
+		else
+			CHAT_SYSTEM('Text: on')
+		end
+		if settings.sound == 0 then
+			CHAT_SYSTEM('Sound: off')
+		else
+			CHAT_SYSTEM('Sound: on')
+		end
+		CHAT_SYSTEM('Sound type: '..settings.soundtype)
+		return;
+	end
+	CHAT_SYSTEM(' ')
+	CHAT_SYSTEM('Available commands:')
+	CHAT_SYSTEM('/cd on')
+	CHAT_SYSTEM('/cd off')
+	CHAT_SYSTEM('/cd <seconds>')
+	CHAT_SYSTEM('/cd icon')
+	CHAT_SYSTEM('/cd text')
+	CHAT_SYSTEM('/cd sound')
+	CHAT_SYSTEM('/cd sound <number>')
+	return;
 end
 
 function CDTRACKER_ON_INIT(addon, frame)
@@ -129,8 +198,13 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	if settings.checkVal >= cdCheck and cdCheck~=oldVal[fullName] then
 		if oldVal[fullName] == 1 and cdCheck == 0 then
 			if settings.sound == 1 then
-				imcSound.PlaySoundEvent('button_click_stats_up');
+				if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
+					imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
+				else
+					imcSound.PlaySoundEvent(soundTypes[1])
+				end
 			end
+			
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
@@ -149,11 +223,13 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			queue[fullName] = -1
 			return curTime, totalTime;
 		end
-		ui.AddText('SystemMsgFrame',' ')
-		ui.AddText('SystemMsgFrame',' ')
-		ui.AddText('SystemMsgFrame',' ')
-		
-		ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
+		if settings.text == 1 then
+			ui.AddText('SystemMsgFrame',' ')
+			ui.AddText('SystemMsgFrame',' ')
+			ui.AddText('SystemMsgFrame',' ')
+			
+			ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
+		end
 		oldVal[fullName] = cdCheck
 		if queue[fullName] == -1 and cdCheck > 0 then
 			if FIND_NEXT_SLOT(iconSlots,0) == nil then
