@@ -18,7 +18,7 @@ Quickly swap between mouse and keyboard modes.
 
 Alerts for skill cooldowns. Text, audio, and visual notifications supported.
 
-* /cd <number> 
+* /cd \<number\> 
 
 Sets how many seconds cooldown to be notified.
 
@@ -34,7 +34,7 @@ Enables/disables addon.
 
 Toggles icon, text, and sound.
 
-* /cd sound <number>
+* /cd sound \<number\>
 
 Sets the alert sound.
 
