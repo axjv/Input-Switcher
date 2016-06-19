@@ -22,11 +22,7 @@
 		"fileVersion" : "v1.0.0",
 		"releaseTag" : "cdtracker",
 		"unicode" : "⛄",
-		"description" : "A convenient way to view your skill cooldowns. Commands:
-		/cd on
-		/cd off
-		/cd <seconds>
-		/cd sound",
+		"description" : "A convenient way to view your skill cooldowns. Commands: /cd on, /cd off, /cd <seconds>, /cd sound",
 		"tags" : [
 			"cooldown",
 			"timer",
