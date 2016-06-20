@@ -155,6 +155,9 @@ end
 	
 function ICON_USE_HOOKED(object, reAction)
 	_G['ICON_USE_OLD'](object, reAction);
+	if settings.text == 0 then
+		return;
+	end
 	local iconPt = object;
 	if iconPt  ~=  nil then
 		local icon = tolua.cast(iconPt, 'ui::CIcon');
@@ -274,6 +277,9 @@ function FIND_NEXT_SLOT(slotArr, searchVal)
 end
 
 function DRAW_READY_ICON(obj,duration,iconPos,sizex,sizey)
+	if settings.icon == 0 then
+		return;
+	end
 	if iconPos/2 == math.floor(iconPos/2) then
 		offset = 0 - 65 + 65*(iconPos/2)
 	else
