@@ -244,9 +244,6 @@ end
 	
 function ICON_USE_HOOKED(object, reAction)
 	_G['ICON_USE_OLD'](object, reAction);
-	if settings.text == 0 then
-		return;
-	end
 	local iconPt = object;
 	if iconPt  ~=  nil then
 		local icon = tolua.cast(iconPt, 'ui::CIcon');
@@ -260,6 +257,7 @@ function ICON_USE_HOOKED(object, reAction)
 		end
 		local cdCheck = math.ceil(curTime/1000)
 		if cdCheck ~= 0 then
+			
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
@@ -291,10 +289,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		skillName = GetClassByType("Skill", sklObj.ClassID).ClassName
 		
 		fullName = string.sub(string.match(skillName,'_.+'),2):gsub("%u", " %1"):sub(2)
-		if settings.ignoreList[fullName] == 1 then
-			queue[fullName] = -1
-			return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
-		end
+
 		skillCd[fullName] = curTime
 		if queue[fullName] == nil then
 			queue[fullName] = -1
@@ -309,8 +304,8 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				else
 					imcSound.PlaySoundEvent(soundTypes[1])
 				end
-			end
-			if settings.text == 1 then
+			end	
+			if settings.text == 1 and settings.ignoreList[fullName] ~= 1 then
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
@@ -335,7 +330,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			queue[fullName] = -1
 			return curTime, totalTime;
 		end
-		if settings.text == 1 then
+		if settings.text == 1 and settings.ignoreList[fullName] ~= 1 then
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
