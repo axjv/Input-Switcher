@@ -7,8 +7,22 @@ local default = {
 	text = 1;
 	soundtype = 1;
 	icon = 1;
+	ignoreList = {};
+	chatList = {}
 	}
 	
+local timer = imcTime.GetAppTime()
+local msgDisplay = 0
+
+function TIME_ELAPSED(val)
+	local elapsed = imcTime.GetAppTime() - timer
+	if elapsed > val then
+		timer = imcTime.GetAppTime()
+		return true
+	end
+	return false
+end
+
 local skillName = ' '
 local fullName = ' '
 local prevName = ' '
@@ -21,6 +35,7 @@ local offset = 0
 local queue = {}
 local oldVal = {}
 local skillCd = {}
+local skillList = {}
 skillFrame = {}
 iconFrame = {}
 iconSlots = {}
@@ -34,7 +49,6 @@ function cdTracker_LoadSettings()
 	local s, err = acutil.loadJSON("../addons/cdtracker/settings.json");
 	if err then
 		settings = default
-		cdTracker_SaveSettings()
 	else
 		settings = s
 		for k,v in pairs(default) do
@@ -43,6 +57,7 @@ function cdTracker_LoadSettings()
 			end
 		end
 	end
+	cdTracker_SaveSettings()
 end
 
 function cdTracker_SaveSettings()
@@ -54,16 +69,19 @@ function cdTracker_SetVal(command)
 	if (type(tonumber(cmd)) == "number") then
 		settings.checkVal = tonumber(cmd)
 		cdTracker_SaveSettings()
+		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alert set to '..cmd..' seconds.')
 	end
 	if (cmd == 'on') then
 		settings.alerts = 1
 		cdTracker_SaveSettings()
+		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alerts on.');
 		end
 	if (cmd == 'off') then
 		settings.alerts = 0
 		cdTracker_SaveSettings()
+		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alerts off.')
 	end
 	if (cmd == 'sound') then
@@ -72,6 +90,7 @@ function cdTracker_SetVal(command)
 			if type(tonumber(soundVal)) == 'number' then
 				settings.soundtype = math.floor(tonumber(soundVal))
 				cdTracker_SaveSettings()
+				cdTracker_LoadSettings()
 				imcSound.PlaySoundEvent(soundTypes[settings.soundtype])
 				return CHAT_SYSTEM('Sound type set to '..settings.soundtype..'.')
 			end
@@ -80,10 +99,12 @@ function cdTracker_SetVal(command)
 		if settings.sound == 1 then
 			settings.sound = 0
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Sound off.')
 		else
 			settings.sound = 1
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Sound on.')
 		end
 	end
@@ -91,10 +112,12 @@ function cdTracker_SetVal(command)
 		if settings.icon == 1 then
 			settings.icon = 0
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Icon off.')
 		else
 			settings.icon = 1
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Icon on.')
 		end
 	end
@@ -102,19 +125,78 @@ function cdTracker_SetVal(command)
 		if settings.text == 1 then
 			settings.text = 0
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Text off.')
 		else
 			settings.text = 1
 			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Text on.')
 		end
 	end
+	if (cmd == 'list') then
+		skillList = {}
+		for k,v in pairs(queue) do
+			table.insert(skillList, k)
+		end
+		table.sort(skillList)
+		for k,v in ipairs(skillList) do
+			local alertstatus = 'on'
+			local chatstatus = 'off'
+			if settings.ignoreList[v] ~= nil then
+				if settings.ignoreList[v] == 1 then
+					alertstatus = 'off'
+				end
+			end
+			if settings.chatList[v] ~= nil then
+				if settings.chatList[v] == 1 then
+					chatstatus = 'on'
+				end
+			end
+			CHAT_SYSTEM('ID '..k..': '..v..' - alert '..alertstatus..' - chat '..chatstatus)
+		end
+		return;
+	end
+	if (cmd == 'alert') then
+		local skillID = table.remove(command,1)
+		if skillList[tonumber(skillID)] ~= nil then
+			if settings.ignoreList[skillList[tonumber(skillID)]] == 1 then
+				settings.ignoreList[skillList[tonumber(skillID)]] = 0
+				cdTracker_SaveSettings()
+				cdTracker_LoadSettings()
+				return CHAT_SYSTEM('Alerts on for '..skillList[tonumber(skillID)]..'.')
+			end
+			settings.ignoreList[skillList[tonumber(skillID)]] = 1
+			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
+			return CHAT_SYSTEM('Alerts off for '..skillList[tonumber(skillID)]..'.')
+		end
+		return CHAT_SYSTEM('Invalid skill ID.')
+	end
+	if (cmd == 'chat') then
+		local skillID = table.remove(command,1)
+		if skillList[tonumber(skillID)] ~= nil then
+			if settings.chatList[skillList[tonumber(skillID)]] == 1 then
+				settings.chatList[skillList[tonumber(skillID)]] = 0
+				cdTracker_SaveSettings()
+				cdTracker_LoadSettings()
+				return CHAT_SYSTEM('Chat alerts off for '..skillList[tonumber(skillID)]..'.')
+			end
+			settings.chatList[skillList[tonumber(skillID)]] = 1
+			cdTracker_SaveSettings()
+			cdTracker_LoadSettings()
+			return CHAT_SYSTEM('Chat alerts on for '..skillList[tonumber(skillID)]..'.')
+		end
+		return CHAT_SYSTEM('Invalid skill ID.')
+	end
 	if cmd == 'status' then
+		cdTracker_SaveSettings()
+		cdTracker_LoadSettings()
 		CHAT_SYSTEM(' ')
 		if settings.alerts == 0 then
-			CHAT_SYSTEM('CD Switcher: off')
+			CHAT_SYSTEM('CD Tracker: off')
 		else
-			CHAT_SYSTEM('CD Switcher: on')
+			CHAT_SYSTEM('CD Tracker: on')
 		end
 		if settings.icon == 0 then
 			CHAT_SYSTEM('Icon: off')
@@ -132,6 +214,7 @@ function cdTracker_SetVal(command)
 			CHAT_SYSTEM('Sound: on')
 		end
 		CHAT_SYSTEM('Sound type: '..settings.soundtype)
+		CHAT_SYSTEM(' ')
 		return;
 	end
 	CHAT_SYSTEM(' ')
@@ -143,6 +226,12 @@ function cdTracker_SetVal(command)
 	CHAT_SYSTEM('/cd text')
 	CHAT_SYSTEM('/cd sound')
 	CHAT_SYSTEM('/cd sound <number>')
+	CHAT_SYSTEM('/cd list')
+	CHAT_SYSTEM('/cd alert <ID>')
+	CHAT_SYSTEM('/cd chat <ID>')
+	CHAT_SYSTEM(' ')
+	cdTracker_SaveSettings()
+	cdTracker_LoadSettings()
 	return;
 end
 
@@ -177,6 +266,11 @@ function ICON_USE_HOOKED(object, reAction)
 			
 			ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
 		end
+		if settings.chatList[fullName] == 1 and cdCheck == 0 then
+			ui.Chat('!!Casting '..fullName..'!')
+			msgDisplay = 1
+			timer = imcTime.GetAppTime()
+		end
 	else
 		return;
 	end
@@ -197,6 +291,10 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		skillName = GetClassByType("Skill", sklObj.ClassID).ClassName
 		
 		fullName = string.sub(string.match(skillName,'_.+'),2):gsub("%u", " %1"):sub(2)
+		if settings.ignoreList[fullName] == 1 then
+			queue[fullName] = -1
+			return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
+		end
 		skillCd[fullName] = curTime
 		if queue[fullName] == nil then
 			queue[fullName] = -1
@@ -212,12 +310,18 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 					imcSound.PlaySoundEvent(soundTypes[1])
 				end
 			end
-			
-			ui.AddText('SystemMsgFrame',' ')
-			ui.AddText('SystemMsgFrame',' ')
-			ui.AddText('SystemMsgFrame',' ')
-			
-			ui.AddText('SystemMsgFrame',fullName..' ready.')
+			if settings.text == 1 then
+				ui.AddText('SystemMsgFrame',' ')
+				ui.AddText('SystemMsgFrame',' ')
+				ui.AddText('SystemMsgFrame',' ')
+				
+				ui.AddText('SystemMsgFrame',fullName..' ready.')
+			end
+			if settings.chatList[fullName] == 1 then
+				ui.Chat('!!'..fullName..' ready!')
+				msgDisplay = 1
+				timer = imcTime.GetAppTime()
+			end
 			oldVal[fullName] = 0
 			DRAW_READY_ICON(obj,2.5,tonumber(FIND_NEXT_SLOT(iconSlots,fullName)),60,60)
 			iconSlots[tostring(FIND_NEXT_SLOT(iconSlots,fullName))] = 0
@@ -238,6 +342,11 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			
 			ui.AddText('SystemMsgFrame',fullName..' ready in '..cdCheck..' seconds.')
 		end
+		if settings.chatList[fullName] == 1 then
+			ui.Chat('!!'..fullName..' ready in '..cdCheck..' seconds.')
+			msgDisplay = 1
+			timer = imcTime.GetAppTime()
+		end
 		oldVal[fullName] = cdCheck
 		if queue[fullName] == -1 and cdCheck > 0 then
 			if FIND_NEXT_SLOT(iconSlots,0) == nil then
@@ -255,6 +364,12 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			DRAW_READY_ICON(obj,0.5,tonumber(FIND_NEXT_SLOT(iconSlots,fullName)),scaleUp,scaleUp)
 		else
 			DRAW_READY_ICON(obj,0.5,tonumber(FIND_NEXT_SLOT(iconSlots,fullName)),50,50)
+		end
+	end
+	if settings.chatList[fullName] == 1 then
+		if TIME_ELAPSED(2) and msgDisplay == 1 then
+			ui.Chat('!!')
+			msgDisplay = 0
 		end
 	end
 	return curTime, totalTime;
