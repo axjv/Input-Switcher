@@ -38,6 +38,17 @@ Toggles icon, text, and sound.
 
 Sets the alert sound.
 
+* /cd list
+
+Lists all skills, their IDs and their status.
+
+* /cd alert <ID>
+* /cd chat <ID>
+
+Turns alerts and chat alerts on and off for the selected skill.
+
+
+
 # Download
 
 Addons are available on the [Addon Manager](https://github.com/Excrulon/Tree-of-Savior-Addon-Manager).
