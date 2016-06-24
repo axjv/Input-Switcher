@@ -10,18 +10,6 @@ local default = {
 	ignoreList = {};
 	chatList = {}
 	}
-	
-local timer = imcTime.GetAppTime()
-local msgDisplay = 0
-
-function TIME_ELAPSED(val)
-	local elapsed = imcTime.GetAppTime() - timer
-	if elapsed > val then
-		timer = imcTime.GetAppTime()
-		return true
-	end
-	return false
-end
 
 local skillName = ' '
 local fullName = ' '
@@ -41,6 +29,8 @@ iconFrame = {}
 iconSlots = {}
 soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
 
+local timer = imcTime.GetAppTime()
+local msgDisplay = 0
 
 local screenWidth = ui.GetClientInitialWidth();
 local screenHeight = ui.GetClientInitialHeight();
@@ -61,6 +51,7 @@ function cdTracker_LoadSettings()
 end
 
 function cdTracker_SaveSettings()
+	table.sort(settings)
 	acutil.saveJSON("../addons/cdtracker/settings.json", settings);
 end
 
@@ -135,11 +126,7 @@ function cdTracker_SetVal(command)
 		end
 	end
 	if (cmd == 'list') then
-		skillList = {}
-		for k,v in pairs(queue) do
-			table.insert(skillList, k)
-		end
-		table.sort(skillList)
+		GET_SKILL_LIST()
 		for k,v in ipairs(skillList) do
 			local alertstatus = 'on'
 			local chatstatus = 'off'
@@ -229,16 +216,26 @@ function cdTracker_SetVal(command)
 	CHAT_SYSTEM('/cd list')
 	CHAT_SYSTEM('/cd alert <ID>')
 	CHAT_SYSTEM('/cd chat <ID>')
+	CHAT_SYSTEM('/cd status')
 	CHAT_SYSTEM(' ')
 	cdTracker_SaveSettings()
 	cdTracker_LoadSettings()
 	return;
 end
 
+function QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME_HOOKED(frame)
+	queue = {}
+	oldVal = {}
+	skillCd = {}	
+	_G['QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME_OLD'](frame)
+end
+	
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
+	acutil.setupHook(QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME_HOOKED,'QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME')
 	acutil.slashCommand('/cd',cdTracker_SetVal)
+	GET_SKILL_LIST()
 	cdTracker_LoadSettings()
 end
 	
@@ -408,4 +405,23 @@ function DRAW_READY_ICON(obj,duration,iconPos,sizex,sizey)
 	iconFrame[iconPos]:SetImage(iconname)
 	iconFrame[iconPos]:Resize(sizex,sizey)
 	iconFrame[iconPos]:SetGravity(ui.LEFT, ui.TOP);
+end
+
+function GET_SKILL_LIST()
+	skillList = {}
+	for k,v in pairs(queue) do
+		table.insert(skillList, k)
+	end
+	table.sort(skillList)
+end
+
+
+
+function TIME_ELAPSED(val)
+	local elapsed = math.floor(imcTime.GetAppTime() - timer)
+	if elapsed > val then
+		timer = imcTime.GetAppTime()
+		return true
+	end
+	return false
 end
