@@ -5,7 +5,7 @@
 		"extension" : "ipf",
 		"fileVersion" : "v1.1.0",
 		"releaseTag" : "blueberry",
-		"unicode" : "☼",
+		"unicode" : "⛄",
 		"description" : "Adds hotkeys to swap between input modes. Type /inputswitch in game for more details.",
 		"tags" : [
 			"input",
@@ -19,9 +19,9 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v2.0.1",
+		"fileVersion" : "v2.0.2",
 		"releaseTag" : "blueberry",
-		"unicode" : "☼",
+		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Type /cd in game for a list of commands.",
 		"tags" : [
 			"cooldown",
