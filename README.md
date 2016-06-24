@@ -47,6 +47,9 @@ Lists all skills, their IDs and their status.
 
 Turns alerts and chat alerts on and off for the selected skill.
 
+* /cd status
+
+Shows on/off status for all options.
 
 
 # Download
