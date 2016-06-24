@@ -51,6 +51,9 @@ Turns alerts and chat alerts on and off for the selected skill.
 
 Shows on/off status for all options.
 
+* /cd reset
+
+Resets all settings to default.
 
 # Download
 
