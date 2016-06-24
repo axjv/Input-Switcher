@@ -204,6 +204,12 @@ function cdTracker_SetVal(command)
 		CHAT_SYSTEM(' ')
 		return;
 	end
+	if (cmd == 'reset') then
+		settings = default
+		cdTracker_SaveSettings()
+		cdTracker_LoadSettings()
+		return CHAT_SYSTEM('All settings reset to defaults.')
+	end
 	CHAT_SYSTEM(' ')
 	CHAT_SYSTEM('Available commands:')
 	CHAT_SYSTEM('/cd on')
@@ -217,6 +223,7 @@ function cdTracker_SetVal(command)
 	CHAT_SYSTEM('/cd alert <ID>')
 	CHAT_SYSTEM('/cd chat <ID>')
 	CHAT_SYSTEM('/cd status')
+	CHAT_SYSTEM('/cd reset')
 	CHAT_SYSTEM(' ')
 	cdTracker_SaveSettings()
 	cdTracker_LoadSettings()
@@ -340,7 +347,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			timer = imcTime.GetAppTime()
 		end
 		oldVal[fullName] = cdCheck
-		if queue[fullName] == -1 and cdCheck > 0 then
+		if queue[fullName] == -1 and cdCheck > 0 and settings.ignoreList[fullName] ~= 1 then
 			if FIND_NEXT_SLOT(iconSlots,0) == nil then
 				iconSlots[tostring(counter)] = fullName
 				queue[fullName] = counter
@@ -350,7 +357,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			end
 			counter = counter + 1
 		end
-		if skillCd[fullName] < 500 then
+		if skillCd[fullName] < 500 and settings.ignoreList[fullName] ~= 1 then
 			local countUp = 500 - skillCd[fullName]
 			local scaleUp = 50 + (countUp/500)*10
 			DRAW_READY_ICON(obj,0.5,tonumber(FIND_NEXT_SLOT(iconSlots,fullName)),scaleUp,scaleUp)
