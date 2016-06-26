@@ -11,6 +11,7 @@ local default = {
 	ignoreList = {};
 	chatList = {}
 	}
+soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
 
 cdTrackSkill = {}
 skillFrame = {}
@@ -59,19 +60,16 @@ function cdTracker_SetVal(command)
 	if (type(tonumber(cmd)) == "number") then
 		settings.checkVal = tonumber(cmd)
 		cdTracker_SaveSettings()
-		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alert set to '..cmd..' seconds.')
 	end
 	if (cmd == 'on') then
 		settings.alerts = 1
 		cdTracker_SaveSettings()
-		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alerts on.');
 		end
 	if (cmd == 'off') then
 		settings.alerts = 0
 		cdTracker_SaveSettings()
-		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('CD alerts off.')
 	end
 	if (cmd == 'sound') then
@@ -79,9 +77,8 @@ function cdTracker_SetVal(command)
 		if soundVal ~= nil then
 			if type(tonumber(soundVal)) == 'number' then
 				settings.soundtype = math.floor(tonumber(soundVal))
-				cdTracker_SaveSettings()
-				cdTracker_LoadSettings()
 				imcSound.PlaySoundEvent(soundTypes[settings.soundtype])
+				cdTracker_SaveSettings()
 				return CHAT_SYSTEM('Sound type set to '..settings.soundtype..'.')
 			end
 			return CHAT_SYSTEM('Invalid sound value.')
@@ -89,12 +86,10 @@ function cdTracker_SetVal(command)
 		if settings.sound == 1 then
 			settings.sound = 0
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Sound off.')
 		else
 			settings.sound = 1
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Sound on.')
 		end
 	end
@@ -102,12 +97,10 @@ function cdTracker_SetVal(command)
 		if settings.icon == 1 then
 			settings.icon = 0
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Icon off.')
 		else
 			settings.icon = 1
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Icon on.')
 		end
 	end
@@ -115,12 +108,10 @@ function cdTracker_SetVal(command)
 		if settings.text == 1 then
 			settings.text = 0
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Text off.')
 		else
 			settings.text = 1
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Text on.')
 		end
 	end
@@ -149,12 +140,10 @@ function cdTracker_SetVal(command)
 			if settings.ignoreList[skillList[tonumber(skillID)]] == 1 then
 				settings.ignoreList[skillList[tonumber(skillID)]] = 0
 				cdTracker_SaveSettings()
-				cdTracker_LoadSettings()
 				return CHAT_SYSTEM('Alerts on for '..skillList[tonumber(skillID)]..'.')
 			end
 			settings.ignoreList[skillList[tonumber(skillID)]] = 1
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Alerts off for '..skillList[tonumber(skillID)]..'.')
 		end
 		return CHAT_SYSTEM('Invalid skill ID.')
@@ -165,19 +154,15 @@ function cdTracker_SetVal(command)
 			if settings.chatList[skillList[tonumber(skillID)]] == 1 then
 				settings.chatList[skillList[tonumber(skillID)]] = 0
 				cdTracker_SaveSettings()
-				cdTracker_LoadSettings()
 				return CHAT_SYSTEM('Chat alerts off for '..skillList[tonumber(skillID)]..'.')
 			end
 			settings.chatList[skillList[tonumber(skillID)]] = 1
 			cdTracker_SaveSettings()
-			cdTracker_LoadSettings()
 			return CHAT_SYSTEM('Chat alerts on for '..skillList[tonumber(skillID)]..'.')
 		end
 		return CHAT_SYSTEM('Invalid skill ID.')
 	end
 	if cmd == 'status' then
-		cdTracker_SaveSettings()
-		cdTracker_LoadSettings()
 		CHAT_SYSTEM(' ')
 		if settings.alerts == 0 then
 			CHAT_SYSTEM('CD Tracker: off')
@@ -206,7 +191,6 @@ function cdTracker_SetVal(command)
 	if (cmd == 'reset') then
 		settings = default
 		cdTracker_SaveSettings()
-		cdTracker_LoadSettings()
 		return CHAT_SYSTEM('All settings reset to defaults.')
 	end
 	CHAT_SYSTEM(' ')
@@ -225,15 +209,12 @@ function cdTracker_SetVal(command)
 	CHAT_SYSTEM('/cd reset')
 	CHAT_SYSTEM(' ')
 	cdTracker_SaveSettings()
-	cdTracker_LoadSettings()
 	return;
 end
 
 
-
-
 function CHECK_ICON_EXIST(icon)
-	for k,v in cdTrackSkill['icon'] do
+	for k,v in pairs(cdTrackSkill['icon']) do
 		if v == icon then
 			return k
 		end
@@ -244,18 +225,21 @@ function CHECK_ICON_EXIST(icon)
 	return skillIndex-1
 end
 
+
 function GRAB_SKILL_INFO(icon)
 	local tTime = 0;
 	local cTime = 0;
 	local iconInfo = icon:GetInfo();
 	local skillInfo = session.GetSkill(iconInfo.type);
+	local sklObj = GetIES(skillInfo:GetObject());
 	if skillInfo ~= nil then
 		cTime = skillInfo:GetCurrentCoolDownTime();
 		tTime = skillInfo:GetTotalCoolDownTime();
-		local sklObj = GetIES(skillInfo:GetObject());
+		
 		skillName = GetClassByType("Skill", sklObj.ClassID).ClassName
 	end
 	local skillInfoTable = {
+	sklInfo = skillInfo;
 	curTime = cTime;
 	curTimeSecs = math.ceil(cTime/1000);
 	totalTime = tTime;
@@ -268,14 +252,16 @@ function GRAB_SKILL_INFO(icon)
 end
 
 
-function FIND_NEXT_SLOT()
-	for i = 1, 100 do
-		if cdTrackSkill['Slots'][i] == nil then
-			return i;
-		end	
+function FIND_NEXT_SLOT(index)
+	for k,v in pairs(cdTrackSkill['Slots']) do
+		if v == index then
+			return tonumber(k)
+		end
 	end
-	return 0;
+	table.insert(cdTrackSkill['Slots'],index)
+	return #cdTrackSkill['Slots']
 end
+
 
 function ICON_USE_HOOKED(object, reAction)
 	_G['ICON_USE_OLD'](object, reAction);
@@ -283,7 +269,7 @@ function ICON_USE_HOOKED(object, reAction)
 	if iconPt  ~=  nil then
 		local icon = tolua.cast(iconPt, 'ui::CIcon');
 		local index = CHECK_ICON_EXIST(icon)
-		cdTrackSkill[index]['curTime'] = skillInfo:GetCurrentCoolDownTime();
+		cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
 		cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
 		if cdTrackSkill[index]['curTimeSecs'] ~= 0 then
 			
@@ -309,10 +295,11 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
 	end
 	local index = CHECK_ICON_EXIST(icon)
-	cdTrackSkill[index]['curTime'] = skillInfo:GetCurrentCoolDownTime();
+	cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
+	cdTrackSkill[index]['totalTime'] = cdTrackSkill[index]['sklInfo']:GetTotalCoolDownTime();
 	cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)		
-	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] > 0 then
-		if cdTrackSkill[index]['prevTime'] == 1 and cdTrackSkill[index]['curTimeSecs'] == 0 then
+	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
+		if cdTrackSkill[index]['curTimeSecs'] == 0 then
 			if settings.sound == 1 then
 				if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
 					imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
@@ -332,23 +319,12 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				msgDisplay = 1
 				timer = imcTime.GetAppTime()
 			end
-			cdTrackSkill[fullName]['prevTime'] = 0
-			DRAW_READY_ICON(cdTrackSkill[fullName]['obj'],2.5,tonumber(FIND_NEXT_SLOT(cdTrackSkill['Slots'],cdTrackSkill[index]['fullName'])),60,60)
-			cdTrackSkill['Slots'][tostring(FIND_NEXT_SLOT(cdTrackSkill['Slots'],cdTrackSkill[index]['fullName']))] = 0
-			counter = counter - 1
-			if counter == 0 then
-				-- for k,v in pairs(queue) do
-					-- ui.DestroyFrame('SKILL_FRAME_'..v)
-				-- end
-				offset = 0
-			end
-			queue[fullName] = -1
-			return curTime, totalTime;
+			cdTrackSkill[index]['prevTime'] = 0
+			DRAW_READY_ICON(cdTrackSkill[index]['obj'],2.5,cdTrackSkill[index]['slot'],60,60)
+			table.remove(cdTrackSkill['Slots'],FIND_NEXT_SLOT(index))
+			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
-		if queue[cdTrackSkill[index]['fullName']] == nil then
-			queue[fullName] = -1
-		end
-		
+
 		if settings.text == 1 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
@@ -356,24 +332,25 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
-		if settings.chatList[fullName] == 1 then
-			ui.Chat('!!'..fullName..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
+		if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
+			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
-		cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
-		if cdTrackSkill[index]['curTimeSecs'] > 0 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
-			skillSlot = FIND_NEXT_SLOT()
-			cdTrackSkill[index]['slot'] = skillSlot
-			cdTrackSkill['Slots'][skillSlot] = index
+		
+		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
+			cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index)
 		end
-		if cdTrackSkill[index]['curTime'] < 500 and settings.ignoreList[fullName] ~= 1 then
+		
+		if cdTrackSkill[index]['curTime'] < 500 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
 			local countUp = 500 - cdTrackSkill[index]['curTime']
 			local scaleUp = 50 + (countUp/500)*10
 			DRAW_READY_ICON(cdTrackSkill[index]['obj'],0.5,cdTrackSkill[index]['slot'],scaleUp,scaleUp)
 		else
 			DRAW_READY_ICON(cdTrackSkill[index]['obj'],0.5,cdTrackSkill[index]['slot'],50,50)
 		end
+		
+
 	end
 	if settings.chatList[fullName] == 1 then
 		if TIME_ELAPSED(2) and msgDisplay == 1 then
@@ -381,13 +358,16 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			msgDisplay = 0
 		end
 	end
-	return curTime, totalTime;
+	cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
+	return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 end
+
  
 function DRAW_READY_ICON(obj,duration,skillSlot,sizeX,sizeY)
 	if settings.icon == 0 then
 		return;
 	end
+	skillSlot = skillSlot-1
 	if skillSlot/2 == math.floor(skillSlot/2) then
 		offset = 0 - 65 + 65*(skillSlot/2)
 	else
@@ -415,6 +395,7 @@ function GET_SKILL_LIST()
 	for k,v in pairs(cdTrackSkill) do
 		if type(tonumber(k)) == 'number' then
 			table.insert(skillList, cdTrackSkill[k]['fullName'])
+			CHAT_SYSTEM(cdTrackSkill[k]['fullName'])
 		end
 	end
 	table.sort(skillList)
