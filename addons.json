@@ -19,8 +19,8 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v2.1.1",
-		"releaseTag" : "coconut",
+		"fileVersion" : "v2.0.2",
+		"releaseTag" : "blueberry",
 		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Type /cd in game for a list of commands.",
 		"tags" : [
