@@ -18,6 +18,7 @@ skillFrame = {}
 iconFrame = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
+skillList = {}
 skillIndex = 1
 
 
@@ -31,6 +32,13 @@ function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
 	acutil.slashCommand('/cd',cdTracker_SetVal)
+	cdTrackSkill = {}
+	skillFrame = {}
+	iconFrame = {}
+	cdTrackSkill['Slots'] = {}
+	cdTrackSkill['icon'] = {}
+	skillList = {}
+	skillIndex = 1
 	cdTracker_LoadSettings()
 end
 
@@ -395,7 +403,6 @@ function GET_SKILL_LIST()
 	for k,v in pairs(cdTrackSkill) do
 		if type(tonumber(k)) == 'number' then
 			table.insert(skillList, cdTrackSkill[k]['fullName'])
-			CHAT_SYSTEM(cdTrackSkill[k]['fullName'])
 		end
 	end
 	table.sort(skillList)
