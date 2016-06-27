@@ -22,7 +22,7 @@
 		"fileVersion" : "v2.1.1",
 		"releaseTag" : "coconut",
 		"unicode" : "⛄",
-		"description" : "A convenient way to view your skill cooldowns. Type /cd in game for a list of commands.",
+		"description" : "A convenient way to view your skill cooldowns. Includes text notifications, sound alerts, and chat message alerts. Type /cd in game for a list of commands.",
 		"tags" : [
 			"cooldown",
 			"timer",
