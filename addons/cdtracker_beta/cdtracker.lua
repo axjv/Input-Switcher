@@ -481,13 +481,13 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
 	skillFrame['icon'..cdtype][slot] = tolua.cast(skillFrame['icon'..cdtype][slot],'ui::CPicture')
 
 	skillFrame['cooldown'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['cooldown'..cdtype][slot]:SetOffset(12,0)
+	skillFrame['cooldown'..cdtype][slot]:SetOffset(15,0)
 
 	skillFrame['name'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['name'..cdtype][slot]:SetOffset(155,0)
+	skillFrame['name'..cdtype][slot]:SetOffset(140,0)
 	
 	skillFrame['type'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['type'..cdtype][slot]:SetOffset(45,0)
+	skillFrame['type'..cdtype][slot]:SetOffset(50,0)
 	
 	skillFrame['icon'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
 
