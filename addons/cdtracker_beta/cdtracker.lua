@@ -60,41 +60,10 @@ local msgDisplay = 0
 local screenWidth = ui.GetClientInitialWidth();
 local screenHeight = ui.GetClientInitialHeight();
 
--- function RESET_CDTRACKER_ON_MAP_LOAD()
--- 	skillIndex = 1
---
--- 	cdTrackSkill = {}
--- 	cdTrackSkill['Slots'] = {}
--- 	cdTrackSkill['icon'] = {}
---
--- 	cdTrackBuff = {}
--- 	cdTrackBuff['time'] = {}
--- 	cdTrackBuff['prevTime'] = {}
--- 	cdTrackBuff['name'] = {}
--- 	cdTrackBuff['slot'] = {}
--- 	cdTrackBuff['class'] = {}
--- 	cdTrackBuff['Slots'] = {}
---
--- 	skillFrame = {}
--- 	skillFrame['name_SKILL'] = {}
--- 	skillFrame['type_SKILL'] = {}
--- 	skillFrame['cooldown_SKILL'] = {}
--- 	skillFrame['icon_SKILL'] = {}
--- 	skillFrame['name_BUFF'] = {}
--- 	skillFrame['type_BUFF'] = {}
--- 	skillFrame['cooldown_BUFF'] = {}
--- 	skillFrame['icon_BUFF'] = {}
--- 	skillFrame['name_DEBUFF'] = {}
--- 	skillFrame['type_DEBUFF'] = {}
--- 	skillFrame['cooldown_DEBUFF'] = {}
--- 	skillFrame['icon_DEBUFF'] = {}
--- end
-
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
 	acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
-	-- RESET_CDTRACKER_ON_MAP_LOAD()
 	CDTRACKER_LOADSETTINGS()
 end
 
@@ -231,7 +200,6 @@ function CD_TRACKER_CHAT_CMD(command)
 		end
 		arg1 = tonumber(arg1)
 	end
-
 	CD_SETTINGS_TABLE[cmd](arg1)
 	CDTRACKER_SAVESETTINGS()
 	return;
@@ -258,7 +226,6 @@ function GRAB_SKILL_INFO(icon)
 	if skillInfo ~= nil then
 		cTime = skillInfo:GetCurrentCoolDownTime();
 		tTime = skillInfo:GetTotalCoolDownTime();
-
 		skillName = GetClassByType("Skill", sklObj.ClassID).ClassName
 	end
 	local skillInfoTable = {
@@ -343,7 +310,6 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
-
 				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
 			end
 			if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
@@ -352,19 +318,14 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				timer = imcTime.GetAppTime()
 			end
 			cdTrackSkill[index]['prevTime'] = 0
-			-- DRAW_READY_ICON(cdTrackSkill[index]['obj'],2.5,cdTrackSkill[index]['slot'],60,60)
 			DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],2)
-
 			cdTrackSkill['Slots'][FIND_NEXT_SLOT(index,'SKILL')] = nil
-
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
-
 		if settings.text == 1 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
-
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
 		if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
@@ -372,13 +333,10 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
-
 		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
 			cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index,'SKILL')
 		end
-
 		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],0.5)
-
 	end
 	if settings.chatList[fullName] == 1 then
 		if TIME_ELAPSED(2) and msgDisplay == 1 then
@@ -436,11 +394,6 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 		cdTrackBuff['slot'][name] = FIND_NEXT_SLOT(name, 'BUFF')
 		if cdTrackBuff['time'][name] == 0 and cdTrackBuff['prevTime'][name] == 1 then
 			if settings.sound == 1 then
-				-- if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
-					-- imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
-				-- else
-					-- imcSound.PlaySoundEvent(soundTypes[1])
-				-- end
 				imcSound.PlaySoundEvent("sys_jam_slot_equip");
 			end
 			DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
@@ -538,7 +491,6 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
 	end
 
 	cdFrame:Resize(skillFrame['name_'..cdtype][slot]:GetWidth()+170,sizeY)
-
 
 	cdFrame:ShowWindow(1)
 	cdFrame:SetDuration(2)
