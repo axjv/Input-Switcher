@@ -38,6 +38,21 @@ Toggles icon, text, and sound.
 
 Sets the alert sound.
 
+* /cd skin \<number\>
+
+Sets the skin for tracker windows.
+
+* /cd skillX \<number\>
+* /cd skillY \<number\>
+* /cd buffX \<number\>
+* /cd buffY \<number\>
+
+Sets the coordinates for the skill and buff windows.
+
+* /cd size \<number\>
+
+Sets the size scaling for tracker windows. WARNING: This value is a multiplier to the default size. For example, setting it to 2 will double the width and double the height. Recommended values are between 0.75 and 1.5.
+
 * /cd list
 
 Lists all skills, their IDs and their status.
@@ -54,6 +69,10 @@ Shows on/off status for all options.
 * /cd reset
 
 Resets all settings to default.
+
+* /cd help <command>
+
+Shows information about commands.
 
 # Download
 
