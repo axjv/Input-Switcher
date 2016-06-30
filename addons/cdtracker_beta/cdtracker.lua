@@ -24,7 +24,7 @@ local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','q
 
 local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
 
-cdTrackSkill = {}
+local cdTrackSkill = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
 
@@ -59,7 +59,10 @@ local msgDisplay = 0
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
-	-- acutil.setupHook(BUFF_TIME_UPDATE_HOOKED,'BUFF_TIME_UPDATE')
+	cdTrackSkill = {}
+	cdTrackSkill['Slots'] = {}
+	cdTrackSkill['icon'] = {}
+	skillIndex = 1
 	acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
 	CDTRACKER_LOADSETTINGS()
 end
