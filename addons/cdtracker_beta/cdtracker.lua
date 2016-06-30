@@ -16,18 +16,19 @@ local default = {
 	buffPosX = 100;
 	buffPosY = 200;
 	buffs = 1;
-	skin = 'box_glass'
+	skin = 1;
+	size = 1
 	}
 
 local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
 
-local frameTypes = {}
+local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
 
-cdTrackSkill = {}
+local cdTrackSkill = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
 
-cdTrackBuff = {}
+local cdTrackBuff = {}
 cdTrackBuff['time'] = {}
 cdTrackBuff['prevTime'] = {}
 cdTrackBuff['name'] = {}
@@ -35,30 +36,26 @@ cdTrackBuff['slot'] = {}
 cdTrackBuff['class'] = {}
 cdTrackBuff['Slots'] = {}
 
-skillFrame = {}
-skillFrame['name_SKILL'] = {}
-skillFrame['type_SKILL'] = {}
-skillFrame['cooldown_SKILL'] = {}
-skillFrame['icon_SKILL'] = {}
-skillFrame['name_BUFF'] = {}
-skillFrame['type_BUFF'] = {}
-skillFrame['cooldown_BUFF'] = {}
-skillFrame['icon_BUFF'] = {}
-skillFrame['name_DEBUFF'] = {}
-skillFrame['type_DEBUFF'] = {}
-skillFrame['cooldown_DEBUFF'] = {}
-skillFrame['icon_DEBUFF'] = {}
+local skillFrame = {}
+local cdTypeList = {'SKILL','BUFF','DEBUFF'}
+for k,v in pairs(cdTypeList) do
+skillFrame['name_'..v] = {}
+skillFrame['type_'..v] = {}
+skillFrame['cooldown_'..v] = {}
+skillFrame['icon_'..v] = {}
+
+skillFrame['iconFrame_'..v] = {}
+skillFrame['cdFrame_'..v] = {}
+end
 
 local cdTrackType = {}
 local skillIndex = 1
 
-CD_DRAG_STATE = false
+local cdDragInfo = {}
+local CD_DRAG_STATE = false
 
-timer = imcTime.GetAppTime()
+local timer = imcTime.GetAppTime()
 local msgDisplay = 0
-
-local screenWidth = ui.GetClientInitialWidth();
-local screenHeight = ui.GetClientInitialHeight();
 
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
@@ -72,8 +69,28 @@ function CD_DRAG_START()
 end
 
 function CD_DRAG_STOP()
-	CD_DRAG_STATE = false
+	local sizeX = settings.size * 325
+	local sizeY = math.ceil(sizeX * (50/325))
+	local index = cdDragInfo.index
+	local slot = cdDragInfo.slot
+	local name = cdDragInfo.name
+	local cooldown = cdDragInfo.cooldown
+	local cdtype = cdDragInfo.cdtype
+	local obj = cdDragInfo.obj
+	DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
+
+ 	local xPos = cdDragInfo.xPos
+	local yPos = cdDragInfo.yPos
+
+	if cdtype == 'SKILL' then
+		settings.skillPosX = xPos
+		settings.skillPosY = yPos-(60/50)*sizeY*slot
+	elseif cdtype == 'BUFF' or cdtype =='DEBUFF' then
+		settings.buffPosX = xPos
+		settings.buffPosY = yPos-(60/50)*sizeY*slot
+	end
 	CDTRACKER_SAVESETTINGS()
+	CD_DRAG_STATE = false
 end
 
 function CDTRACKER_LOADSETTINGS()
@@ -105,21 +122,22 @@ end
 
 local CD_HELP_TABLE = {
 	alert = function() CHAT_SYSTEM('Usage: /cd alert will toggle cooldown alerts for a single skill.') end;
-	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.') end;
-	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.') end;
-	buffs = function() CHAT_SYSTEM('Usage: /cd buffs will toggle buff tracking on and off.') end;
+	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosX) end;
+	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosY) end;
+	buffs = function() CHAT_SYSTEM('Usage: /cd buffs will toggle buff tracking on and off.'); CHAT_SYSTEM('Default: '..default.buffs) end;
 	chat = function() CHAT_SYSTEM('Usage: /cd chat <ID> will toggle chat alerts for a single skill.') end;
 	help = function() CHAT_SYSTEM('Usage: /cd help <command> will open what you\'re reading.') end;
 	icon = function() CHAT_SYSTEM('Usage: /cd icon will toggle icon display on and off.') end;
 	list = function() CHAT_SYSTEM('Usage: /cd list will list all skills along with their ID.') end;
-	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.') end;
-	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.') end;
+	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.'); CHAT_SYSTEM('Default: '..default.alerts) end;
+	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.'); CHAT_SYSTEM('Default: On') end;
 	reset = function() CHAT_SYSTEM('Usage: /cd reset will reset all settings to default.') end;
-	skillX = function() CHAT_SYSTEM('Usage: /cd skillX <coords> will set the x coordinates for the skill window.') end;
-	skillY = function() CHAT_SYSTEM('Usage: /cd skillY <coords> will set the y coordinates for the skill window.') end;
-	skin = function() CHAT_SYSTEM('Usage: /cd skin <number> will change the skin of the cooldown tracker.') end;
-	sound = function() CHAT_SYSTEM('Usage: /cd sound will toggle sound alerts on and off. /cd sound <number> will change the sound played.') end;
-	text = function() CHAT_SYSTEM('Usage: /cd text will toggle text alerts on and off.') end;
+	size = function() CHAT_SYSTEM('Usage: /cd size <scale> will change the size of all cooldown windows.'); CHAT_SYSTEM('Default: '..default.size) end;
+	skillX = function() CHAT_SYSTEM('Usage: /cd skillX <coords> will set the x coordinates for the skill window.'); CHAT_SYSTEM('Default: '..default.skillPosX) end;
+	skillY = function() CHAT_SYSTEM('Usage: /cd skillY <coords> will set the y coordinates for the skill window.'); CHAT_SYSTEM('Default: '..default.skillPosY) end;
+	skin = function() CHAT_SYSTEM('Usage: /cd skin <number> will change the skin of the cooldown tracker.'); CHAT_SYSTEM('Default: '..default.skin) end;
+	sound = function() CHAT_SYSTEM('Usage: /cd sound will toggle sound alerts on and off. /cd sound <number> will change the sound played.'); CHAT_SYSTEM('Default: '.. default.soundtype) end;
+	text = function() CHAT_SYSTEM('Usage: /cd text will toggle text alerts on and off.'); CHAT_SYSTEM('Default: '..default.text) end;
 }
 
 local CD_SETTINGS_TABLE = {
@@ -146,12 +164,12 @@ alert = function(ID)
 	settings.ignoreList[skillList[ID]] = 1
 	CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to on.') end;
 chat = function(ID)
-	if settings.ignoreList[skillList[ID]] ~= nil then
-		settings.ignoreList[skillList[ID]] = not settings.ignoreList[skillList[ID]]
-		CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..NUM_TO_WORD(settings.ignoreList[skillList[ID]])..'.')
+	if settings.chatList[skillList[ID]] ~= nil then
+		settings.chatList[skillList[ID]] = not settings.chatList[skillList[ID]]
+		CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..NUM_TO_WORD(settings.chatList[skillList[ID]])..'.')
 		return;
 	end
-	settings.ignoreList[skillList[ID]] = 1
+	settings.chatList[skillList[ID]] = 1
 	CHAT_SYSTEM('Chat for '..skillList[ID]..' set to on.') end;
 skillX = function(num) settings.skillPosX = num CHAT_SYSTEM('Skill X set to '..num..'.') end;
 skillY = function(num) settings.skillPosY = num CHAT_SYSTEM('Skill Y set to '..num..'.') end;
@@ -164,21 +182,25 @@ end;
 buffs = function() settings.buffs = math.abs(settings.buffs - 1) CHAT_SYSTEM('Buffs set to '..NUM_TO_WORD(settings.buffs)..'.') end;
 reset = function() settings = default CHAT_SYSTEM('Settings reset to defaults.') end;
 help = function(func) CD_HELP_TABLE[func]() end;
+size = function(num) settings.size = num CHAT_SYSTEM('Size scaling set to '..num..'.') end;
+status = function() CHAT_SYSTEM('Under construction.') end
 }
 
 local mt = {__index = function (t,k)
 	return function()
-	if type(tonumber(k)) == 'number' then
-		settings.checkVal = tonumber(k) CHAT_SYSTEM('CD alerts set to '..k..' seconds.')
-	else
-		CHAT_SYSTEM('Invalid command. Valid commands include /cd followed by:')
-		CHAT_SYSTEM('<number>, on, off, sound, icon, text, skin,')
-		CHAT_SYSTEM('sound <type>, list, alert <ID>, chat <ID>,')
-		CHAT_SYSTEM('status, buffs, reset, help.')
-		CHAT_SYSTEM(' ')
-		CHAT_SYSTEM('For more information, type /cd help <command>.')
-		CHAT_SYSTEM(' ')
-	end
+		if type(tonumber(k)) == 'number' then
+			settings.checkVal = tonumber(k) CHAT_SYSTEM('CD alerts set to '..k..' seconds.')
+		else
+			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>')
+			CHAT_SYSTEM(' ')
+			CHAT_SYSTEM('Toggle commands: on, off, sound, icon, text, buffs, alert <ID>, chat <ID>')
+			CHAT_SYSTEM('Setting commands: <number>, sound <number>, skin <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>')
+			CHAT_SYSTEM('Status commands: list, status')
+			CHAT_SYSTEM('System commands: reset, help')
+			CHAT_SYSTEM(' ')
+			CHAT_SYSTEM('For more information, type /cd help <command>.')
+			CHAT_SYSTEM(' ')
+		end
   end
 end;
 }
@@ -194,11 +216,9 @@ function CD_TRACKER_CHAT_CMD(command)
 	end
 	if #command > 0 then
 		arg1 = table.remove(command, 1)
-		if cmd == 'help' then
-			CD_SETTINGS_TABLE[cmd](arg1)
-			return;
+		if cmd ~= 'help' then
+			arg1 = tonumber(arg1)
 		end
-		arg1 = tonumber(arg1)
 	end
 	CD_SETTINGS_TABLE[cmd](arg1)
 	CDTRACKER_SAVESETTINGS()
@@ -271,11 +291,9 @@ function ICON_USE_HOOKED(object, reAction)
 		cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
 		cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
 		if cdTrackSkill[index]['curTimeSecs'] ~= 0 then
-
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
-
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
 		if settings.chatList[fullName] == 1 and cdCheck == 0 then
@@ -318,7 +336,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				timer = imcTime.GetAppTime()
 			end
 			cdTrackSkill[index]['prevTime'] = 0
-			DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],2)
+			DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 			cdTrackSkill['Slots'][FIND_NEXT_SLOT(index,'SKILL')] = nil
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
@@ -336,7 +354,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
 			cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index,'SKILL')
 		end
-		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],0.5)
+		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 	end
 	if settings.chatList[fullName] == 1 then
 		if TIME_ELAPSED(2) and msgDisplay == 1 then
@@ -348,15 +366,6 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 end
 
-buff_ui = {};
-buff_ui["buff_group_cnt"] = 2;	-- 0 : buff(limitcount) / 1 : buff / 2 : debuff
-buff_ui["slotsets"] = {};
-buff_ui["slotlist"] = {};
-buff_ui["captionlist"] = {};
-buff_ui["slotcount"] = {};
-buff_ui["txt_x_offset"] = 1;
-buff_ui["txt_y_offset"] = 1;
-
 function CDTRACK_BUFF_CHECK()
 	if settings.buffs == 0 then
 		return;
@@ -367,8 +376,8 @@ function CDTRACK_BUFF_CHECK()
 		local slotlist = buff_ui["slotlist"][j];
 		if buff_ui["slotcount"][j] ~= nil and buff_ui["slotcount"][j] >= 0 then
   		for i = 0,  buff_ui["slotcount"][j] - 1 do
-  			local slot		= slotlist[i];
-				local icon 		= slot:GetIcon();
+  			local slot = slotlist[i];
+				local icon = slot:GetIcon();
 				local iconInfo = icon:GetInfo();
 				local buffIndex = icon:GetUserIValue("BuffIndex");
 				local buff = info.GetBuff(handle, iconInfo.type, buffIndex);
@@ -403,102 +412,141 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 		end
 		DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
 	end
+
 	cdTrackBuff['prevTime'][name] = cdTrackBuff['time'][name]
 	return;
 end
 
-function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
-	local sizeX = 325
-	local sizeY = 50
+function CREATE_NEW_CD_FRAME(cdtype, slot)
+	local sizeX = settings.size * 325
+	local sizeY = math.ceil(sizeX * (50/325))
 
-	local cdFrame = ui.CreateNewFrame('cdtracker','FRAME__'..cdtype..slot)
-	cdFrame:SetSkinName(settings.skin)
+	local cdFrame = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
+	local skinSetting = frameSkins[settings.skin]
+	if skinSetting == nil then
+		cdFrame:SetSkinName(frameSkins[1])
+	else
+		cdFrame:SetSkinName(frameSkins[settings.skin])
+	end
 	cdFrame:Resize(sizeX,sizeY)
+	local iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME_'..cdtype..slot)
+	iconFrame:Resize(sizeY,sizeY)
 
-	local iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME__'..cdtype..slot)
-	iconFrame:Resize(50,50)
+	cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
+	cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP");
 
-	skillFrame['name_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_name__'..cdtype..slot, 0,0,0,0)
+	skillFrame['cdFrame_'..cdtype][slot] = cdFrame
+	skillFrame['iconFrame_'..cdtype][slot] = iconFrame
+
+	skillFrame['name_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_name_'..cdtype..slot, 0,0,0,0)
 	skillFrame['name_'..cdtype][slot] = tolua.cast(skillFrame['name_'..cdtype][slot],'ui::CRichText')
-	skillFrame['type_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_type__'..cdtype..slot, 0,0,0,0)
+	skillFrame['type_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_type_'..cdtype..slot, 0,0,0,0)
 	skillFrame['type_'..cdtype][slot] = tolua.cast(skillFrame['type_'..cdtype][slot],'ui::CRichText')
-	skillFrame['cooldown_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_cooldown__'..cdtype..slot, 0,0,0,0)
+	skillFrame['cooldown_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_cooldown_'..cdtype..slot, 0,0,0,0)
 	skillFrame['cooldown_'..cdtype][slot] = tolua.cast(skillFrame['cooldown_'..cdtype][slot],'ui::CRichText')
-	skillFrame['icon_'..cdtype][slot] = iconFrame:CreateOrGetControl('picture','cd_icon__'..cdtype..slot, 0,0,0,0)
+	skillFrame['icon_'..cdtype][slot] = iconFrame:CreateOrGetControl('picture','cd_icon_'..cdtype..slot, 0,0,0,0)
 	skillFrame['icon_'..cdtype][slot] = tolua.cast(skillFrame['icon_'..cdtype][slot],'ui::CPicture')
 
 	skillFrame['cooldown_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['cooldown_'..cdtype][slot]:SetOffset(15,0)
+	skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15/325*sizeX),0)
+	skillFrame['cooldown_'..cdtype][slot]:EnableHitTest(0)
 
 	skillFrame['name_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['name_'..cdtype][slot]:SetOffset(140,0)
+	skillFrame['name_'..cdtype][slot]:SetOffset(math.ceil(140/325*sizeX),0)
+	skillFrame['name_'..cdtype][slot]:EnableHitTest(0)
 
 	skillFrame['type_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['type_'..cdtype][slot]:SetOffset(50,0)
+	skillFrame['type_'..cdtype][slot]:SetOffset(math.ceil(50/325*sizeX),0)
+	skillFrame['type_'..cdtype][slot]:EnableHitTest(0)
 
 	skillFrame['icon_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
+	return;
+end
+
+function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
+
+	CREATE_NEW_CD_FRAME(cdtype,slot)
+	local sizeX = settings.size * 325
+	local sizeY = math.ceil(sizeX * (50/325))
+	local fontSize = math.ceil((18/50) * sizeY)
+	local cdFrame = skillFrame['cdFrame_'..cdtype][slot]
+	local iconFrame = skillFrame['iconFrame_'..cdtype][slot]
 
 	local colors = {red = '{#cc0000}', green = '{#00cc00}', yellow = '{#cccc00}', orange = '{#cc6600}'}
 	if cdtype == 'SKILL' then
 		local totalCd = cdTrackSkill[index]['totalTime']
 		if cooldown == 0 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..'-')
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..'-')
 		elseif cooldown < (totalCd/1000)*.33 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..cooldown)
 		elseif cooldown < (totalCd/1000)*.66 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..cooldown)
 		else
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..cooldown)
 		end
-		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s18}{#ffe600}[SKILL]')
+		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}{#ffe600}[SKILL]')
 	end
 	if cdtype == 'BUFF' then
-
 		if cooldown == 0 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..'-')
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..'-')
 		elseif cooldown <= 5 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..cooldown)
 		elseif cooldown < 10 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..cooldown)
 		else
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..cooldown)
 		end
-		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s18}{#00e6cf}[BUFF]')
+		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}{#00e6cf}[BUFF]')
 	end
 	if cdtype == 'DEBUFF' then
 		if cooldown == 0 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.green..'-')
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.green..'-')
 		elseif cooldown <= 5 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.yellow..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.yellow..cooldown)
 		elseif cooldown < 10 then
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.orange..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.orange..cooldown)
 		else
-			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..name)
-			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s18}'..colors.red..cooldown)
+			skillFrame['name_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..name)
+			skillFrame['cooldown_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}'..colors.red..cooldown)
 		end
-		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s18}{#cc0000}[DEBUFF]')
+		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}{#cc0000}[DEBUFF]')
 	end
 
-	cdFrame:Resize(skillFrame['name_'..cdtype][slot]:GetWidth()+170,sizeY)
-
-	cdFrame:ShowWindow(1)
-	cdFrame:SetDuration(2)
+	cdFrame:Resize(skillFrame['name_'..cdtype][slot]:GetWidth()+math.ceil(170/325*sizeX),sizeY)
 
 	local iconname = "Icon_" .. obj.Icon
 	skillFrame['icon_'..cdtype][slot]:SetImage(iconname)
 	skillFrame['icon_'..cdtype][slot]:SetEnableStretch(1)
-	skillFrame['icon_'..cdtype][slot]:Resize(50,50)
+	skillFrame['icon_'..cdtype][slot]:Resize(sizeY,sizeY)
+
+	cdFrame:ShowWindow(1)
+	cdFrame:SetDuration(2)
+
+	if CD_DRAG_STATE == true then
+		iconFrame:ShowWindow(0)
+		cdDragInfo = {cdtype = cdtype, slot = slot, index = index, name = name, cooldown = cooldown, obj = obj, xPos = cdFrame:GetX(), yPos = cdFrame:GetY()}
+		return;
+	end
+
+	if cdtype == 'SKILL' then
+		cdFrame:MoveFrame(settings.skillPosX,settings.skillPosY+math.ceil(60/50*sizeY)*slot)
+		iconFrame:MoveFrame(settings.skillPosX-math.ceil(65/325*sizeX),settings.skillPosY+math.ceil(60/50*sizeY)*slot)
+	end
+	if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
+		cdFrame:MoveFrame(settings.buffPosX,settings.buffPosY+math.ceil(60/50*sizeY)*slot)
+		iconFrame:MoveFrame(settings.buffPosX-math.ceil(65/325*sizeX),settings.buffPosY+math.ceil(60/50*sizeY)*slot)
+	end
 
 	iconFrame:ShowWindow(1)
 	if cdtype == 'SKILL' then
@@ -524,29 +572,6 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
 			iconFrame:SetDuration(0.5)
 		else
 			iconFrame:SetDuration(2)
-		end
-	end
-	cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
-	cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP");
-
-	if CD_DRAG_STATE == true then
-		if cdtype == 'SKILL' then
-			settings.skillPosX = cdFrame:GetX()
-			settings.skillPosY = cdFrame:GetY()-60*slot
-		end
-		if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
-			settings.buffPosX = cdFrame:GetX()
-			settings.buffPosY = cdFrame:GetY()-60*slot
-		end
-	end
-	if CD_DRAG_STATE == false then
-		if cdtype == 'SKILL' then
-			cdFrame:MoveFrame(settings.skillPosX,settings.skillPosY+60*slot)
-			iconFrame:MoveFrame(settings.skillPosX-65,settings.skillPosY+60*slot)
-		end
-		if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
-			cdFrame:MoveFrame(settings.buffPosX,settings.buffPosY+60*slot)
-			iconFrame:MoveFrame(settings.buffPosX-65,settings.buffPosY+60*slot)
 		end
 	end
 end
