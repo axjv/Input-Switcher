@@ -24,7 +24,7 @@ local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','q
 
 local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
 
-local cdTrackSkill = {}
+cdTrackSkill = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
 
@@ -51,7 +51,6 @@ end
 local cdTrackType = {}
 local skillIndex = 1
 
-local cdDragInfo = {}
 local CD_DRAG_STATE = false
 
 local timer = imcTime.GetAppTime()
@@ -60,6 +59,7 @@ local msgDisplay = 0
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
+	-- acutil.setupHook(BUFF_TIME_UPDATE_HOOKED,'BUFF_TIME_UPDATE')
 	acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
 	CDTRACKER_LOADSETTINGS()
 end
@@ -68,29 +68,22 @@ function CD_DRAG_START()
 	CD_DRAG_STATE = true
 end
 
-function CD_DRAG_STOP()
-	local sizeX = settings.size * 325
-	local sizeY = math.ceil(sizeX * (50/325))
-	local index = cdDragInfo.index
-	local slot = cdDragInfo.slot
-	local name = cdDragInfo.name
-	local cooldown = cdDragInfo.cooldown
-	local cdtype = cdDragInfo.cdtype
-	local obj = cdDragInfo.obj
-	DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
+function CD_DRAG_STOP(cdtype, slot)
+	CD_DRAG_STATE = false
+	local cdFrame = skillFrame['cdFrame_'..cdtype][tonumber(slot)]
 
- 	local xPos = cdDragInfo.xPos
-	local yPos = cdDragInfo.yPos
+ 	local xPos = cdFrame:GetX()
+	local yPos = cdFrame:GetY()
 
 	if cdtype == 'SKILL' then
 		settings.skillPosX = xPos
-		settings.skillPosY = yPos-(60/50)*sizeY*slot
+		settings.skillPosY = yPos-60*settings.size*slot
 	elseif cdtype == 'BUFF' or cdtype =='DEBUFF' then
 		settings.buffPosX = xPos
-		settings.buffPosY = yPos-(60/50)*sizeY*slot
+		settings.buffPosY = yPos-60*settings.size*slot
 	end
 	CDTRACKER_SAVESETTINGS()
-	CD_DRAG_STATE = false
+
 end
 
 function CDTRACKER_LOADSETTINGS()
@@ -112,6 +105,7 @@ function CDTRACKER_SAVESETTINGS()
 	table.sort(settings)
 	acutil.saveJSON("../addons/cdtracker/settings.json", settings);
 end
+
 function NUM_TO_WORD(num)
 	if num == 1 then
 		return 'on'
@@ -310,8 +304,11 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	if settings.alerts == 0 then
 		return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
 	end
-	CDTRACK_BUFF_CHECK()
+
 	local index = CHECK_ICON_EXIST(icon)
+	if index == 1 then
+		CDTRACK_BUFF_CHECK()
+	end
 	cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
 	cdTrackSkill[index]['totalTime'] = cdTrackSkill[index]['sklInfo']:GetTotalCoolDownTime();
 	cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
@@ -412,31 +409,30 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 		end
 		DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
 	end
-
 	cdTrackBuff['prevTime'][name] = cdTrackBuff['time'][name]
 	return;
 end
 
-function CREATE_NEW_CD_FRAME(cdtype, slot)
-	local sizeX = settings.size * 325
-	local sizeY = math.ceil(sizeX * (50/325))
-
-	local cdFrame = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
+function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
+	cdFrame = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
+	skillFrame['cdFrame_'..cdtype][slot] = cdFrame
 	local skinSetting = frameSkins[settings.skin]
 	if skinSetting == nil then
 		cdFrame:SetSkinName(frameSkins[1])
 	else
 		cdFrame:SetSkinName(frameSkins[settings.skin])
 	end
-	cdFrame:Resize(sizeX,sizeY)
-	local iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME_'..cdtype..slot)
-	iconFrame:Resize(sizeY,sizeY)
-
+	cdFrame:Resize(settings.size * 325,settings.size * 50)
 	cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
-	cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP");
+	cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP('"..cdtype.."',"..slot..")");
 
-	skillFrame['cdFrame_'..cdtype][slot] = cdFrame
+	iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME_'..cdtype..slot)
 	skillFrame['iconFrame_'..cdtype][slot] = iconFrame
+	iconFrame:Resize(settings.size * 50,settings.size * 50)
+
+	skillFrame['icon_'..cdtype][slot] = iconFrame:CreateOrGetControl('picture','cd_icon_'..cdtype..slot, 0,0,0,0)
+	skillFrame['icon_'..cdtype][slot] = tolua.cast(skillFrame['icon_'..cdtype][slot],'ui::CPicture')
+	skillFrame['icon_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
 
 	skillFrame['name_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_name_'..cdtype..slot, 0,0,0,0)
 	skillFrame['name_'..cdtype][slot] = tolua.cast(skillFrame['name_'..cdtype][slot],'ui::CRichText')
@@ -444,33 +440,21 @@ function CREATE_NEW_CD_FRAME(cdtype, slot)
 	skillFrame['type_'..cdtype][slot] = tolua.cast(skillFrame['type_'..cdtype][slot],'ui::CRichText')
 	skillFrame['cooldown_'..cdtype][slot] = cdFrame:CreateOrGetControl('richtext','cd_cooldown_'..cdtype..slot, 0,0,0,0)
 	skillFrame['cooldown_'..cdtype][slot] = tolua.cast(skillFrame['cooldown_'..cdtype][slot],'ui::CRichText')
-	skillFrame['icon_'..cdtype][slot] = iconFrame:CreateOrGetControl('picture','cd_icon_'..cdtype..slot, 0,0,0,0)
-	skillFrame['icon_'..cdtype][slot] = tolua.cast(skillFrame['icon_'..cdtype][slot],'ui::CPicture')
 
 	skillFrame['cooldown_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15/325*sizeX),0)
+	skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15*settings.size),0)
 	skillFrame['cooldown_'..cdtype][slot]:EnableHitTest(0)
 
 	skillFrame['name_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['name_'..cdtype][slot]:SetOffset(math.ceil(140/325*sizeX),0)
+	skillFrame['name_'..cdtype][slot]:SetOffset(math.ceil(140*settings.size),0)
 	skillFrame['name_'..cdtype][slot]:EnableHitTest(0)
 
 	skillFrame['type_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	skillFrame['type_'..cdtype][slot]:SetOffset(math.ceil(50/325*sizeX),0)
+	skillFrame['type_'..cdtype][slot]:SetOffset(math.ceil(50*settings.size),0)
 	skillFrame['type_'..cdtype][slot]:EnableHitTest(0)
 
-	skillFrame['icon_'..cdtype][slot]:SetGravity(ui.LEFT, ui.CENTER_VERT)
-	return;
-end
 
-function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
-
-	CREATE_NEW_CD_FRAME(cdtype,slot)
-	local sizeX = settings.size * 325
-	local sizeY = math.ceil(sizeX * (50/325))
-	local fontSize = math.ceil((18/50) * sizeY)
-	local cdFrame = skillFrame['cdFrame_'..cdtype][slot]
-	local iconFrame = skillFrame['iconFrame_'..cdtype][slot]
+	local fontSize = math.ceil(18 * settings.size)
 
 	local colors = {red = '{#cc0000}', green = '{#00cc00}', yellow = '{#cccc00}', orange = '{#cc6600}'}
 	if cdtype == 'SKILL' then
@@ -523,29 +507,29 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
 		skillFrame['type_'..cdtype][slot]:SetText('{@st41}{s'..fontSize..'}{#cc0000}[DEBUFF]')
 	end
 
-	cdFrame:Resize(skillFrame['name_'..cdtype][slot]:GetWidth()+math.ceil(170/325*sizeX),sizeY)
+	cdFrame:Resize(skillFrame['name_'..cdtype][slot]:GetWidth()+math.ceil(170*settings.size),math.ceil(settings.size*50))
 
 	local iconname = "Icon_" .. obj.Icon
 	skillFrame['icon_'..cdtype][slot]:SetImage(iconname)
 	skillFrame['icon_'..cdtype][slot]:SetEnableStretch(1)
-	skillFrame['icon_'..cdtype][slot]:Resize(sizeY,sizeY)
+	skillFrame['icon_'..cdtype][slot]:Resize(math.ceil(settings.size * 50),math.ceil(settings.size * 50))
 
 	cdFrame:ShowWindow(1)
 	cdFrame:SetDuration(2)
 
+
 	if CD_DRAG_STATE == true then
 		iconFrame:ShowWindow(0)
-		cdDragInfo = {cdtype = cdtype, slot = slot, index = index, name = name, cooldown = cooldown, obj = obj, xPos = cdFrame:GetX(), yPos = cdFrame:GetY()}
 		return;
 	end
 
 	if cdtype == 'SKILL' then
-		cdFrame:MoveFrame(settings.skillPosX,settings.skillPosY+math.ceil(60/50*sizeY)*slot)
-		iconFrame:MoveFrame(settings.skillPosX-math.ceil(65/325*sizeX),settings.skillPosY+math.ceil(60/50*sizeY)*slot)
+		cdFrame:MoveFrame(settings.skillPosX,settings.skillPosY+math.ceil(60*settings.size)*slot)
+		iconFrame:MoveFrame(settings.skillPosX-math.ceil(65/325*settings.size * 325),settings.skillPosY + math.ceil(60*settings.size)*slot)
 	end
 	if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
-		cdFrame:MoveFrame(settings.buffPosX,settings.buffPosY+math.ceil(60/50*sizeY)*slot)
-		iconFrame:MoveFrame(settings.buffPosX-math.ceil(65/325*sizeX),settings.buffPosY+math.ceil(60/50*sizeY)*slot)
+		cdFrame:MoveFrame(settings.buffPosX,settings.buffPosY+math.ceil(60*settings.size)*slot)
+		iconFrame:MoveFrame(settings.buffPosX-math.ceil(65*settings.size),settings.buffPosY + math.ceil(60*settings.size)*slot)
 	end
 
 	iconFrame:ShowWindow(1)
