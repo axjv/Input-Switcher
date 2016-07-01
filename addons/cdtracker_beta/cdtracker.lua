@@ -113,7 +113,7 @@ function CDTRACKER_LOADSETTINGS()
 	else
 		settings = s
 		for k,v in pairs(default) do
-			if not s[k] then
+			if s[k] == nil then
 				settings[k] = v
 			end
 		end
