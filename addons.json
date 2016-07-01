@@ -28,5 +28,19 @@
 			"timer",
 			"alert"
 		]
+	},
+	{
+		"name" : "Chat FX",
+		"file" : "chatfx",
+		"extension" : "ipf",
+		"fileVersion" : "v0.0.1",
+		"releaseTag" : "eggplant",
+		"unicode" : "⛄",
+		"description" : "Get the likes you know you deserve. Moving yellowtext. /!! <message>",
+		"tags" : [
+			"chat",
+			"scroll",
+			"marquee"
+		]
 	}
 ]
