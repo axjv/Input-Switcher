@@ -12,7 +12,7 @@ Be like all the cool kids. Make your text wiggle.
 
 Show off your awesome message.
 
-* /!! \<style\> \<speed\>
+* /!!set \<style\> \<speed\>
 
 Switch it up with 3 different styles! Style is a number from 1-3, speed is in frames per second.
 
