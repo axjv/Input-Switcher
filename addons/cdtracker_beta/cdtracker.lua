@@ -4,18 +4,18 @@ local _G = _G
 local settings = {}
 local default = {
 	checkVal = 5;
-	alerts = 1;
-	sound = 1;
-	text = 1;
+	alerts = true;
+	sound = true;
+	text = true;
 	soundtype = 1;
-	icon = 1;
+	icon = true;
 	ignoreList = {};
 	chatList = {};
 	skillPosX = 700;
 	skillPosY = 225;
 	buffPosX = 100;
 	buffPosY = 200;
-	buffs = 1;
+	buffs = true;
 	skin = 1;
 	size = 1
 	}
@@ -24,7 +24,7 @@ local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','q
 
 local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
 
-local cdTrackSkill = {}
+cdTrackSkill = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
 
@@ -54,7 +54,7 @@ local skillIndex = 1
 local CD_DRAG_STATE = false
 
 local timer = imcTime.GetAppTime()
-local msgDisplay = 0
+local msgDisplay = false
 
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
@@ -109,8 +109,8 @@ function CDTRACKER_SAVESETTINGS()
 	acutil.saveJSON("../addons/cdtracker/settings.json", settings);
 end
 
-function NUM_TO_WORD(num)
-	if num == 1 then
+function BOOL_TO_WORD(cond)
+	if cond == true then
 		return 'on'
 	else
 		return 'off'
@@ -138,8 +138,8 @@ local CD_HELP_TABLE = {
 }
 
 local CD_SETTINGS_TABLE = {
-on = function() settings.alerts = 1 CHAT_SYSTEM('Alerts on.') end;
-off = function() settings.alerts = 0 CHAT_SYSTEM('Alerts off.') end;
+on = function() settings.alerts = true CHAT_SYSTEM('Alerts on.') end;
+off = function() settings.alerts = false CHAT_SYSTEM('Alerts off.') end;
 sound = function(num)
 		if type(num) == 'number' then
 			settings.soundtype = num
@@ -147,26 +147,26 @@ sound = function(num)
 			imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
 			return;
 		end
-		settings.sound = math.abs(settings.sound-1)
-		CHAT_SYSTEM('Sound set to '..NUM_TO_WORD(settings.sound)..'.')
+		settings.sound = not settings.sound
+		CHAT_SYSTEM('Sound set to '..BOOL_TO_WORD(settings.sound)..'.')
 	end;
-text = function() settings.text = math.abs(settings.text-1) CHAT_SYSTEM('Text set to '..NUM_TO_WORD(settings.text)..'.') end;
-icon = function() settings.icon = math.abs(settings.icon-1) CHAT_SYSTEM('Icon set to '..NUM_TO_WORD(settings.icon)..'.') end;
+text = function() settings.text = not settings.text CHAT_SYSTEM('Text set to '..BOOL_TO_WORD(settings.text)..'.') end;
+icon = function() settings.icon = not settings.icon CHAT_SYSTEM('Icon set to '..BOOL_TO_WORD(settings.icon)..'.') end;
 alert = function(ID)
 	if settings.ignoreList[skillList[ID]] ~= nil then
 		settings.ignoreList[skillList[ID]] = not settings.ignoreList[skillList[ID]]
-		CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..NUM_TO_WORD(settings.ignoreList[skillList[ID]])..'.')
+		CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..BOOL_TO_WORD(settings.ignoreList[skillList[ID]])..'.')
 		return;
 	end
-	settings.ignoreList[skillList[ID]] = 1
+	settings.ignoreList[skillList[ID]] = true
 	CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to on.') end;
 chat = function(ID)
 	if settings.chatList[skillList[ID]] ~= nil then
 		settings.chatList[skillList[ID]] = not settings.chatList[skillList[ID]]
-		CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..NUM_TO_WORD(settings.chatList[skillList[ID]])..'.')
+		CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..BOOL_TO_WORD(settings.chatList[skillList[ID]])..'.')
 		return;
 	end
-	settings.chatList[skillList[ID]] = 1
+	settings.chatList[skillList[ID]] = true
 	CHAT_SYSTEM('Chat for '..skillList[ID]..' set to on.') end;
 skillX = function(num) settings.skillPosX = num CHAT_SYSTEM('Skill X set to '..num..'.') end;
 skillY = function(num) settings.skillPosY = num CHAT_SYSTEM('Skill Y set to '..num..'.') end;
@@ -174,9 +174,9 @@ buffX = function(num) settings.buffPosX = num CHAT_SYSTEM('Buff X set to '..num.
 buffY = function(num) settings.buffPosY = num CHAT_SYSTEM('Buff Y set to '..num..'.') end;
 skin = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
 list = function() GET_SKILL_LIST() for k,v in ipairs(skillList) do
-	CHAT_SYSTEM('ID '..k..': '..v..' - alert '..NUM_TO_WORD(settings.ignoreList[v])..' - chat '..NUM_TO_WORD(settings.chatList[v])) end
+	CHAT_SYSTEM('ID '..k..': '..v..' - alert '..BOOL_TO_WORD(settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])) end
 end;
-buffs = function() settings.buffs = math.abs(settings.buffs - 1) CHAT_SYSTEM('Buffs set to '..NUM_TO_WORD(settings.buffs)..'.') end;
+buffs = function() settings.buffs = not settings.buffs CHAT_SYSTEM('Buffs set to '..BOOL_TO_WORD(settings.buffs)..'.') end;
 reset = function() settings = default CHAT_SYSTEM('Settings reset to defaults.') end;
 help = function(func) CD_HELP_TABLE[func]() end;
 size = function(num) settings.size = num CHAT_SYSTEM('Size scaling set to '..num..'.') end;
@@ -293,9 +293,9 @@ function ICON_USE_HOOKED(object, reAction)
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
-		if settings.chatList[fullName] == 1 and cdCheck == 0 then
+		if settings.chatList[cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 then
 			ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
-			msgDisplay = 1
+			msgDisplay = true
 			timer = imcTime.GetAppTime()
 		end
 	else
@@ -304,7 +304,7 @@ function ICON_USE_HOOKED(object, reAction)
 end
 
 function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
-	if settings.alerts == 0 then
+	if settings.alerts == false then
 		return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
 	end
 
@@ -317,22 +317,22 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
 	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
 		if cdTrackSkill[index]['curTimeSecs'] == 0 then
-			if settings.sound == 1 then
+			if settings.sound == true then
 				if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
 					imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
 				else
 					imcSound.PlaySoundEvent(soundTypes[1])
 				end
 			end
-			if settings.text == 1 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
+			if settings.text == true and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
 			end
-			if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
+			if settings.chatList[cdTrackSkill[index]['fullName']] == true then
 				ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
-				msgDisplay = 1
+				msgDisplay = true
 				timer = imcTime.GetAppTime()
 			end
 			cdTrackSkill[index]['prevTime'] = 0
@@ -340,26 +340,26 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			cdTrackSkill['Slots'][FIND_NEXT_SLOT(index,'SKILL')] = nil
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
-		if settings.text == 1 and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
+		if settings.text == true and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
-		if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
+		if settings.chatList[cdTrackSkill[index]['fullName']] == true then
 			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
-			msgDisplay = 1
+			msgDisplay = true
 			timer = imcTime.GetAppTime()
 		end
-		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= 1 then
+		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
 			cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index,'SKILL')
 		end
 		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 	end
-	if settings.chatList[fullName] == 1 then
-		if TIME_ELAPSED(2) and msgDisplay == 1 then
+	if settings.chatList[cdTrackSkill[index]['fullName']] == true then
+		if TIME_ELAPSED(2) and msgDisplay == true then
 			ui.Chat('!!')
-			msgDisplay = 0
+			msgDisplay = false
 		end
 	end
 	cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
@@ -367,7 +367,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 end
 
 function CDTRACK_BUFF_CHECK()
-	if settings.buffs == 0 then
+	if settings.buffs == false then
 		return;
 	end
 	local buff_ui = _G['s_buff_ui']
@@ -402,7 +402,7 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 	if cdTrackBuff['prevTime'][name] ~= cdTrackBuff['time'][name] then
 		cdTrackBuff['slot'][name] = FIND_NEXT_SLOT(name, 'BUFF')
 		if cdTrackBuff['time'][name] == 0 and cdTrackBuff['prevTime'][name] == 1 then
-			if settings.sound == 1 then
+			if settings.sound == true then
 				imcSound.PlaySoundEvent("sys_jam_slot_equip");
 			end
 			DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
