@@ -146,7 +146,7 @@ function CDTRACKER_SAVESETTINGS()
 end
 
 function BOOL_TO_WORD(cond)
-	return cond and 'on' or 'off'
+	return (cond == true) and 'on' or 'off'
 end
 
 local mt = {__index = function (t,k)
