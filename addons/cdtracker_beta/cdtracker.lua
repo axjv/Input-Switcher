@@ -77,6 +77,13 @@ function CDTRACKER_ON_INIT(addon, frame)
 	cdTrackSkill['Slots'] = {}
 	cdTrackSkill['icon'] = {}
 	skillIndex = 1
+	cdTrackBuff = {}
+	cdTrackBuff['time'] = {}
+	cdTrackBuff['prevTime'] = {}
+	cdTrackBuff['name'] = {}
+	cdTrackBuff['slot'] = {}
+	cdTrackBuff['class'] = {}
+	cdTrackBuff['Slots'] = {}
 	checkChatFrame = ui.GetFrame('chat')
 	acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
 	CDTRACKER_LOADSETTINGS()
