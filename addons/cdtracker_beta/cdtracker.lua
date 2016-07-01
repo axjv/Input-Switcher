@@ -17,16 +17,23 @@ local default = {
 	buffPosY = 200;
 	buffs = true;
 	skin = 1;
-	size = 1
+	size = 1;
+	firstTimeMessage = false
 	}
+
 
 local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
 
 local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
 
+-- store skill
+
+local skillIndex = 1
 cdTrackSkill = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon'] = {}
+
+-- store buff
 
 local cdTrackBuff = {}
 cdTrackBuff['time'] = {}
@@ -35,6 +42,8 @@ cdTrackBuff['name'] = {}
 cdTrackBuff['slot'] = {}
 cdTrackBuff['class'] = {}
 cdTrackBuff['Slots'] = {}
+
+-- store frame data
 
 local skillFrame = {}
 local cdTypeList = {'SKILL','BUFF','DEBUFF'}
@@ -49,22 +58,49 @@ skillFrame['cdFrame_'..v] = {}
 end
 
 local cdTrackType = {}
-local skillIndex = 1
 
 local CD_DRAG_STATE = false
 
+-- timer for chat notification
 local timer = imcTime.GetAppTime()
 local msgDisplay = false
+local checkChatFrame = ui.GetFrame('chat')
+
+-- begin main body
 
 function CDTRACKER_ON_INIT(addon, frame)
 	acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
 	acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
+	addon:RegisterMsg('RESTQUICKSLOT_OPEN', 'QUICKSLOTNEXPBAR_KEEPVISIBLE');
+	addon:RegisterMsg('RESTQUICKSLOT_CLOSE', 'QUICKSLOTNEXPBAR_RESTORE');
 	cdTrackSkill = {}
 	cdTrackSkill['Slots'] = {}
 	cdTrackSkill['icon'] = {}
 	skillIndex = 1
+	checkChatFrame = ui.GetFrame('chat')
 	acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
 	CDTRACKER_LOADSETTINGS()
+	if not settings.firstTimeMessage then
+		ui.MsgBox("{s18}{#c70404}Important:{nl} {nl}{#000000}CDTracker Beta settings have been changed, if you are upgrading from an older version please reset using{nl} {nl}{#03134d}/cd reset{nl} {nl}This message will only show once.","helpBoxTable.helpBox_1()","helpBoxTable.helpBox_1()");
+		settings.firstTimeMessage = true
+		CDTRACKER_SAVESETTINGS()
+	end
+
+end
+
+-- if resting, keep skillbar alive
+
+function QUICKSLOTNEXPBAR_KEEPVISIBLE()
+	local quickSlotBar = ui.GetFrame('quickslotnexpbar')
+	ui.OpenFrame('quickslotnexpbar')
+	quickSlotBar:SetVisible(0)
+end
+
+-- restore old skillbar on stand
+
+function QUICKSLOTNEXPBAR_RESTORE()
+	local quickSlotBar = ui.GetFrame('quickslotnexpbar')
+	quickSlotBar:SetVisible(1)
 end
 
 function CD_DRAG_START()
@@ -117,7 +153,35 @@ function BOOL_TO_WORD(cond)
 	end
 end
 
+local mt = {__index = function (t,k)
+	return function()
+		if type(tonumber(k)) == 'number' then
+			settings.checkVal = tonumber(k) CHAT_SYSTEM('CD alerts set to '..k..' seconds.')
+		else
+			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>')
+			CHAT_SYSTEM(' ')
+			CHAT_SYSTEM('Toggle commands: on, off, sound, icon, text, buffs, alert <ID>, chat <ID>')
+			CHAT_SYSTEM('Setting commands: <number>, sound <number>, skin <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>')
+			CHAT_SYSTEM('Status commands: list, status')
+			CHAT_SYSTEM('System commands: reset, help help all')
+			CHAT_SYSTEM(' ')
+			CHAT_SYSTEM('For more information, type /cd help <command>.')
+			CHAT_SYSTEM(' ')
+		end
+  end
+end;
+}
+
+helpBoxTable = {
+	helpBox_1 = function() ui.MsgBox("{s18}{#1908e3}Main commands:{#000000}{nl} {nl}{#03134d}/cd <number>{#000000} will set the notification time in seconds.{nl} {nl}{#03134d}/cd on, /cd off{nl}/cd icon, /cd text{nl}/cd sound{#000000} {nl}are all toggle commands.{nl} {nl}{#03134d}/cd buffs{#000000} toggles the buff window on and off.{nl} {nl}{#03134d}/cd sound <number>{#000000} will set the sound type. (Default: 1){nl} {nl}{#03134d}/cd skin <number>{#000000} will set the skin type. (Default: 1) ","helpBoxTable.helpBox_2()","helpBoxTable.helpBox_2()") end;
+	helpBox_2 = function() ui.MsgBox("{s18}{#1908e3}Layout commands:{#000000}{nl} {nl}{#03134d}/cd size <number>{#000000} will let you modify the size scaling of windows. (Default: 1){nl} {nl}{#03134d}/cd skillX <number>{nl}/cd skillY <number>{nl}/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works. ","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
+	helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}/cd chat <ID>{#000000} toggles yellowtext (!!) broadcasting for specific skills.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
+	helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}/cd help <command>{#000000} will show a short explanation about a command.{nl} {nl}{#03134d}/cd help all{#000000} will show this help box.","","Nope") end
+}
+
+
 local CD_HELP_TABLE = {
+	all = function() helpBoxTable.helpBox_1() end;
 	alert = function() CHAT_SYSTEM('Usage: /cd alert will toggle cooldown alerts for a single skill.') end;
 	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosX) end;
 	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosY) end;
@@ -177,29 +241,10 @@ list = function() GET_SKILL_LIST() for k,v in ipairs(skillList) do
 	CHAT_SYSTEM('ID '..k..': '..v..' - alert '..BOOL_TO_WORD(settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])) end
 end;
 buffs = function() settings.buffs = not settings.buffs CHAT_SYSTEM('Buffs set to '..BOOL_TO_WORD(settings.buffs)..'.') end;
-reset = function() settings = default CHAT_SYSTEM('Settings reset to defaults.') end;
+reset = function() local ftMessage = settings.firstTimeMessage settings = default settings.firstTimeMessage = ftMessage CHAT_SYSTEM('Settings reset to defaults.') end;
 help = function(func) CD_HELP_TABLE[func]() end;
 size = function(num) settings.size = num CHAT_SYSTEM('Size scaling set to '..num..'.') end;
 status = function() CHAT_SYSTEM('Under construction.') end
-}
-
-local mt = {__index = function (t,k)
-	return function()
-		if type(tonumber(k)) == 'number' then
-			settings.checkVal = tonumber(k) CHAT_SYSTEM('CD alerts set to '..k..' seconds.')
-		else
-			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>')
-			CHAT_SYSTEM(' ')
-			CHAT_SYSTEM('Toggle commands: on, off, sound, icon, text, buffs, alert <ID>, chat <ID>')
-			CHAT_SYSTEM('Setting commands: <number>, sound <number>, skin <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>')
-			CHAT_SYSTEM('Status commands: list, status')
-			CHAT_SYSTEM('System commands: reset, help')
-			CHAT_SYSTEM(' ')
-			CHAT_SYSTEM('For more information, type /cd help <command>.')
-			CHAT_SYSTEM(' ')
-		end
-  end
-end;
 }
 
 setmetatable(CD_SETTINGS_TABLE, mt)
@@ -221,6 +266,8 @@ function CD_TRACKER_CHAT_CMD(command)
 	CDTRACKER_SAVESETTINGS()
 	return;
 end
+
+-- limit icon function calls
 
 function CHECK_ICON_EXIST(icon)
 	for k,v in pairs(cdTrackSkill['icon']) do
@@ -258,6 +305,8 @@ function GRAB_SKILL_INFO(icon)
 	return skillInfoTable;
 end
 
+-- calculate frame position for each index
+
 function FIND_NEXT_SLOT(index, cdtype)
 	if cdtype == 'SKILL' then
 		cdTrackType = cdTrackSkill
@@ -293,7 +342,7 @@ function ICON_USE_HOOKED(object, reAction)
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
-		if settings.chatList[cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 then
+		if settings.chatList[cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
 			ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
 			msgDisplay = true
 			timer = imcTime.GetAppTime()
@@ -310,6 +359,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 
 	local index = CHECK_ICON_EXIST(icon)
 	if index == 1 then
+		-- run once every loop through all skills
 		CDTRACK_BUFF_CHECK()
 	end
 	cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
@@ -330,7 +380,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				ui.AddText('SystemMsgFrame',' ')
 				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
 			end
-			if settings.chatList[cdTrackSkill[index]['fullName']] == true then
+			if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
 				ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
 				msgDisplay = true
 				timer = imcTime.GetAppTime()
@@ -346,7 +396,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			ui.AddText('SystemMsgFrame',' ')
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
-		if settings.chatList[cdTrackSkill[index]['fullName']] == true then
+		if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
 			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 			msgDisplay = true
 			timer = imcTime.GetAppTime()
@@ -357,7 +407,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 	end
 	if settings.chatList[cdTrackSkill[index]['fullName']] == true then
-		if TIME_ELAPSED(2) and msgDisplay == true then
+		if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 then
 			ui.Chat('!!')
 			msgDisplay = false
 		end
@@ -365,6 +415,9 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
 	return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 end
+
+-- begin buff section
+-- retrieve all buff info
 
 function CDTRACK_BUFF_CHECK()
 	if settings.buffs == false then
@@ -392,6 +445,8 @@ function CDTRACK_BUFF_CHECK()
 	end
 end
 
+-- prepare buff data for display
+
 function CDTRACK_BUFF_DISPLAY(name,ID)
 	local bufftype = ''
 	if cdTrackBuff['class'][name].Group1 == 'Debuff' then
@@ -415,6 +470,35 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 	cdTrackBuff['prevTime'][name] = cdTrackBuff['time'][name]
 	return;
 end
+
+
+-- function CDTRACKER_SHOW_FRAMES()
+-- 	local buffFrame = ui.CreateNewFrame('cdtracker','BUFF_POS_FRAME')
+-- 	local skillFrame = ui.CreateNewFrame('cdtracker','SKILL_POS_FRAME')
+-- 	skillFrame:Resize(settings.size * 325,settings.size * 50)
+-- 	buffFrame:Resize(settings.size * 325,settings.size * 50)
+-- end
+--
+-- function CD_SHOW_FRAMES_DRAG_START()
+-- end
+--
+-- function CD_SHOW_FRAMES_DRAG_STOP(cdFrame, cdtype)
+--  	local xPos = cdFrame:GetX()
+-- 	local yPos = cdFrame:GetY()
+--
+-- 	if cdtype == 'SKILL' then
+-- 		settings.skillPosX = xPos
+-- 		settings.skillPosY = yPos-60*settings.size*slot
+-- 	elseif cdtype == 'BUFF' or cdtype =='DEBUFF' then
+-- 		settings.buffPosX = xPos
+-- 		settings.buffPosY = yPos-60*settings.size*slot
+-- 	end
+-- 	ui.DestroyFrame(cdFrame:GetName())
+-- 	CDTRACKER_SAVESETTINGS()
+-- end
+
+
+-- draw all frames
 
 function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
 	cdFrame = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
@@ -563,6 +647,8 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
 	end
 end
 
+-- sort and list skills for settings
+
 function GET_SKILL_LIST()
 	skillList = {}
 	for k,v in pairs(cdTrackSkill) do
@@ -572,6 +658,8 @@ function GET_SKILL_LIST()
 	end
 	table.sort(skillList)
 end
+
+-- time calc for chat notification
 
 function TIME_ELAPSED(val)
 	local elapsed = math.floor(imcTime.GetAppTime() - timer)
