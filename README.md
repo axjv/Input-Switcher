@@ -3,16 +3,17 @@ Addons for Tree of Savior.
 
 
 ## Addons
+#### chatfx
 
-#### inputswitcher
+Be like all the cool kids. Make your text wiggle.
 
-Quickly swap between mouse and keyboard modes.
+* /!! <message>
 
-* /inputswitch kb
+Show off your awesome message.
 
-* /inputswitch mouse
+* /!! <style> <speed>
 
-* /inputswitch toggle
+Switch it up with 3 different styles! Style is a number from 1-3, speed is in frames per second.
 
 #### cdtracker
 
@@ -73,6 +74,22 @@ Resets all settings to default.
 * /cd help <command>
 
 Shows information about commands.
+
+* /cd help all
+
+Shows help information in the form of message boxes.
+
+#### inputswitcher
+
+Quickly swap between mouse and keyboard modes.
+
+* /inputswitch kb
+
+* /inputswitch mouse
+
+* /inputswitch toggle
+
+
 
 # Download
 
