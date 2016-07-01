@@ -3,17 +3,19 @@ Addons for Tree of Savior.
 
 
 ## Addons
+
 #### chatfx
 
 Be like all the cool kids. Make your text wiggle.
 
-* /!! <message>
+* /!! \<message\>
 
 Show off your awesome message.
 
-* /!! <style> <speed>
+* /!! \<style\> \<speed\>
 
 Switch it up with 3 different styles! Style is a number from 1-3, speed is in frames per second.
+
 
 #### cdtracker
 
