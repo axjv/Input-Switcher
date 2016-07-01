@@ -19,7 +19,7 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v2.2.3-beta",
+		"fileVersion" : "v2.2.4-beta",
 		"releaseTag" : "durian",
 		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Includes text notifications, sound alerts, and chat message alerts. Type /cd in game for a list of commands.\nNewest release in open beta. Added moving frames, buff tracking support, size scaling, and general performance improvements. IMPORTANT: Refer to the README on the website for information on commands.",
