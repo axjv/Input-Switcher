@@ -341,7 +341,10 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
 	cdTrackSkill[index]['totalTime'] = cdTrackSkill[index]['sklInfo']:GetTotalCoolDownTime();
 	cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
-
+	if cdTrackSkill[index]['prevTime'] - cdTrackSkill[index]['curTimeSecs'] > 1 then
+		cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
+		return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
+	end
 	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
 		if cdTrackSkill[index]['curTimeSecs'] == 0 then
 			if settings.sound == true then
