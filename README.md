@@ -31,11 +31,15 @@ Sets how many seconds cooldown to be notified.
 
 Enables/disables addon.
 
-* /cd icon
+* /cd skills
+* /cd buffs
+
+Toggles skill and buff frames.
+
 * /cd text
 * /cd sound
 
-Toggles icon, text, and sound.
+Toggles text and sound.
 
 * /cd sound \<number\>
 
