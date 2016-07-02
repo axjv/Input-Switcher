@@ -233,7 +233,7 @@ local CD_SETTINGS_TABLE = {
 	skin = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
 	list = function() GET_SKILL_LIST() local skillStr = ''
 		for k,v in ipairs(skillList) do
-			skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..'{nl}'
+			skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(not settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..'{nl}'
 		end
 		CHAT_SYSTEM(skillStr)
 	end;
