@@ -99,10 +99,11 @@ function CD_DRAG_STOP(cdtype, slot)
 	if cdtype == 'SKILL' then
 		settings.skillPosX = xPos
 		settings.skillPosY = yPos-60*settings.size*slot
-	elseif cdtype == 'BUFF' or cdtype =='DEBUFF' then
+	else
 		settings.buffPosX = xPos
 		settings.buffPosY = yPos-60*settings.size*slot
 	end
+	cdFrame:SetDuration(1)
 	CDTRACKER_SAVESETTINGS()
 end
 
@@ -159,7 +160,8 @@ helpBoxTable = {
 	helpBox_2 = function() ui.MsgBox("{s18}{#1908e3}Layout commands:{#000000}{nl} {nl}{#03134d}"..
 		"/cd size <number>{#000000} will let you modify the size scaling of windows. (Default: 1){nl} {nl}{#03134d}"..
 		"/cd skillX <number>{nl}/cd skillY <number>{nl}"..
-		"/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works.","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
+		"/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works.{nl} {nl}{#03134d}"..
+		"/cd showframes{nl}{#000000}will show you draggable frames to set window positions.","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
 	helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}"..
 		"/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}"..
 		"/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}"..
@@ -182,6 +184,7 @@ local CD_HELP_TABLE = {
 	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.{nl}Default: '..default.alerts) end;
 	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.{nl}Default: On') end;
 	reset = function() CHAT_SYSTEM('Usage: /cd reset will reset all settings to default.') end;
+	showframes = function() CHAT_SYSTEM('Usage: /cd showframes will show and set current positions of windows.') end;
 	size = function() CHAT_SYSTEM('Usage: /cd size <scale> will change the size of all cooldown windows.{nl}Default: '..default.size) end;
 	skills = function() CHAT_SYSTEM('Usage: /cd skills will toggle skill tracking on and off.{nl}Default: '..default.skills) end;
 	skillX = function() CHAT_SYSTEM('Usage: /cd skillX <coords> will set the x coordinates for the skill window.{nl}Default: '..default.skillPosX) end;
@@ -227,6 +230,7 @@ local CD_SETTINGS_TABLE = {
 	skillY = function(num) settings.skillPosY = num CHAT_SYSTEM('Skill Y set to '..num..'.') end;
 	buffX = function(num) settings.buffPosX = num CHAT_SYSTEM('Buff X set to '..num..'.') end;
 	buffY = function(num) settings.buffPosY = num CHAT_SYSTEM('Buff Y set to '..num..'.') end;
+	showframes = function() CDTRACKER_SHOW_FRAMES() end;
 	skin = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
 	list = function() GET_SKILL_LIST() local skillStr = ''
 		for k,v in ipairs(skillList) do
@@ -336,6 +340,19 @@ function FIND_NEXT_SLOT(index, cdtype)
 	table.insert(cdTrackType['Slots'],index)
 	return #cdTrackType['Slots']
 end
+-- prune empty slots
+function CLEANUP_SLOTS()
+	for k,v in pairs(cdTrackBuff['slot']) do
+		if cdTrackBuff['time'][k] == 0 then
+			cdTrackBuff['Slots'][FIND_NEXT_SLOT(k,'BUFF')] = nil
+		end
+	end
+	for k,v in pairs(cdTrackSkill) do
+		if cdTrackSkill[k]['curTime'] == 0 then
+			cdTrackSkill['Slots'][FIND_NEXT_SLOT(k,'SKILL')] = nil
+		end
+	end
+end
 
 function ICON_USE_HOOKED(object, reAction)
 	_G['ICON_USE_OLD'](object, reAction);
@@ -401,10 +418,9 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 					ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
 				end
 				if settings.skills == true then
-					DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
+					DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],2)
 				end
 			end
-			cdTrackSkill['Slots'][FIND_NEXT_SLOT(index,'SKILL')] = nil
 			cdTrackSkill[index]['prevTime'] = 0
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
@@ -423,7 +439,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			end
 			if settings.skills == true then
 				cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index,'SKILL')
-				DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
+				DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'],2)
 			end
 		end
 	end
@@ -476,7 +492,6 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 			end
 			DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
 			cdTrackBuff['prevTime'][name] = 0
-			cdTrackBuff['Slots'][FIND_NEXT_SLOT(name,'BUFF')] = nil
 			return;
 		end
 		DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
@@ -485,7 +500,8 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 	return;
 end
 -- draw frame to screen
-function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
+function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
+	CLEANUP_SLOTS()
 	cdFrame = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
 	iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME_'..cdtype..slot)
 	skillFrame['cdFrame_'..cdtype][slot] = cdFrame
@@ -574,18 +590,16 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj)
 	skillFrame['icon_'..cdtype][slot]:Resize(math.ceil(settings.size * 50),math.ceil(settings.size * 50))
 
 	cdFrame:ShowWindow(1)
-	cdFrame:SetDuration(2)
+	cdFrame:SetDuration(duration)
 
 	if CD_DRAG_STATE == true then
-		iconFrame:ShowWindow(0)
-		return;
+		return iconFrame:ShowWindow(0);
 	end
 	-- move frame to correct position
 	local movePosX, movePosY = nil
 	if cdtype == 'SKILL' then
 		movePosX, movePosY = settings.skillPosX, settings.skillPosY
-	end
-	if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
+	else
 		movePosX, movePosY = settings.buffPosX, settings.buffPosY
 	end
 	cdFrame:MoveFrame(movePosX,movePosY+math.ceil(60*settings.size)*slot)
@@ -636,4 +650,8 @@ function TIME_ELAPSED(val)
 		return true
 	end
 	return false
+end
+function CDTRACKER_SHOW_FRAMES()
+	DISPLAY_SLOT(1, 1, 'Skill Frame', 1, 'SKILL', cdTrackSkill[1]['obj'], 999)
+	DISPLAY_SLOT(1, 1, 'Buff Frame', 1, 'BUFF',  cdTrackSkill[1]['obj'], 999)
 end
