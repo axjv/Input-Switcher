@@ -15,6 +15,7 @@ local default = {
 	size = 1;
 	skillPosX = 700;
 	skillPosY = 225;
+	skills = true;
 	skin = 1;
 	sound = true;
 	soundtype = 1;
@@ -135,46 +136,61 @@ local mt = {__index = function (t,k)
 		if type(tonumber(k)) == 'number' then
 			settings.checkVal = tonumber(k) CHAT_SYSTEM('CD alerts set to '..k..' seconds.')
 		else
-			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>')
-			CHAT_SYSTEM(' ')
-			CHAT_SYSTEM('Toggle commands: on, off, sound, icon, text, buffs, alert <ID>, chat <ID>')
-			CHAT_SYSTEM('Setting commands: <number>, sound <number>, skin <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>')
-			CHAT_SYSTEM('Status commands: list, status')
-			CHAT_SYSTEM('System commands: reset, help help all')
-			CHAT_SYSTEM(' ')
-			CHAT_SYSTEM('For more information, type /cd help <command>.')
-			CHAT_SYSTEM(' ')
+			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>'..
+			'{nl} {nl}'..
+			'{nl}Toggle commands: on, off, sound, icon, text, buffs, alert <ID>, chat <ID>'..
+			'{nl}Setting commands: <number>, sound <number>, skin <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>'..
+			'{nl}Status commands: list, status'..
+			'{nl}System commands: reset, help help all'..
+			'{nl} {nl}'..
+			'{nl}For more information, type /cd help <command>.'..
+			'{nl} {nl}')
 		end
   end
 end;
 }
 
 helpBoxTable = {
-	helpBox_1 = function() ui.MsgBox("{s18}{#1908e3}Main commands:{#000000}{nl} {nl}{#03134d}/cd <number>{#000000} will set the notification time in seconds.{nl} {nl}{#03134d}/cd on, /cd off{nl}/cd icon, /cd text{nl}/cd sound{#000000} {nl}are all toggle commands.{nl} {nl}{#03134d}/cd buffs{#000000} toggles the buff window on and off.{nl} {nl}{#03134d}/cd sound <number>{#000000} will set the sound type. (Default: 1){nl} {nl}{#03134d}/cd skin <number>{#000000} will set the skin type. (Default: 1) ","helpBoxTable.helpBox_2()","helpBoxTable.helpBox_2()") end;
-	helpBox_2 = function() ui.MsgBox("{s18}{#1908e3}Layout commands:{#000000}{nl} {nl}{#03134d}/cd size <number>{#000000} will let you modify the size scaling of windows. (Default: 1){nl} {nl}{#03134d}/cd skillX <number>{nl}/cd skillY <number>{nl}/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works. ","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
-	helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}/cd chat <ID>{#000000} toggles yellowtext (!!) broadcasting for specific skills.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
-	helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}/cd help <command>{#000000} will show a short explanation about a command.{nl} {nl}{#03134d}/cd help all{#000000} will show this help box.","","Nope") end
+	helpBox_1 = function() ui.MsgBox("{s18}{#1908e3}Main commands:{#000000}{nl} {nl}{#03134d}"..
+		"/cd <number>{#000000} will set the notification time in seconds.{nl} {nl}{#03134d}"..
+		"/cd on, /cd off{nl}/cd icon, /cd text{nl}/cd sound{#000000} {nl}are all toggle commands.{nl} {nl}{#03134d}"..
+		"/cd buffs, cd skills{#000000} toggles the buff/skill window on and off.{nl} {nl}{#03134d}"..
+		"/cd sound <number>{#000000} will set the sound type. (Default: 1){nl} {nl}{#03134d}"..
+		"/cd skin <number>{#000000} will set the skin type. (Default: 1) ","helpBoxTable.helpBox_2()","helpBoxTable.helpBox_2()") end;
+	helpBox_2 = function() ui.MsgBox("{s18}{#1908e3}Layout commands:{#000000}{nl} {nl}{#03134d}"..
+		"/cd size <number>{#000000} will let you modify the size scaling of windows. (Default: 1){nl} {nl}{#03134d}"..
+		"/cd skillX <number>{nl}/cd skillY <number>{nl}"..
+		"/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works.","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
+	helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}"..
+		"/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}"..
+		"/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}"..
+		"/cd chat <ID>{#000000} toggles yellowtext (!!) broadcasting for specific skills.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
+	helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}"..
+		"/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}"..
+		"/cd help <command>{#000000} will show a short explanation about a command.{nl} {nl}{#03134d}"..
+		"/cd help all{#000000} will show this help box.","","Nope") end
 }
 
 local CD_HELP_TABLE = {
 	alert = function() CHAT_SYSTEM('Usage: /cd alert will toggle cooldown alerts for a single skill.') end;
 	all = function() helpBoxTable.helpBox_1() end;
-	buffs = function() CHAT_SYSTEM('Usage: /cd buffs will toggle buff tracking on and off.'); CHAT_SYSTEM('Default: '..default.buffs) end;
-	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosX) end;
-	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.'); CHAT_SYSTEM('Default: '..default.buffPosY) end;
+	buffs = function() CHAT_SYSTEM('Usage: /cd buffs will toggle buff tracking on and off.{nl}Default: '..default.buffs) end;
+	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.{nl}Default: '..default.buffPosX) end;
+	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.{nl}Default: '..default.buffPosY) end;
 	chat = function() CHAT_SYSTEM('Usage: /cd chat <ID> will toggle chat alerts for a single skill.') end;
 	help = function() CHAT_SYSTEM('Usage: /cd help <command> will open what you\'re reading.') end;
 	icon = function() CHAT_SYSTEM('Usage: /cd icon will toggle icon display on and off.') end;
 	list = function() CHAT_SYSTEM('Usage: /cd list will list all skills along with their ID.') end;
-	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.'); CHAT_SYSTEM('Default: '..default.alerts) end;
-	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.'); CHAT_SYSTEM('Default: On') end;
+	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.{nl}Default: '..default.alerts) end;
+	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.{nl}Default: On') end;
 	reset = function() CHAT_SYSTEM('Usage: /cd reset will reset all settings to default.') end;
-	size = function() CHAT_SYSTEM('Usage: /cd size <scale> will change the size of all cooldown windows.'); CHAT_SYSTEM('Default: '..default.size) end;
-	skillX = function() CHAT_SYSTEM('Usage: /cd skillX <coords> will set the x coordinates for the skill window.'); CHAT_SYSTEM('Default: '..default.skillPosX) end;
-	skillY = function() CHAT_SYSTEM('Usage: /cd skillY <coords> will set the y coordinates for the skill window.'); CHAT_SYSTEM('Default: '..default.skillPosY) end;
-	skin = function() CHAT_SYSTEM('Usage: /cd skin <number> will change the skin of the cooldown tracker.'); CHAT_SYSTEM('Default: '..default.skin) end;
-	sound = function() CHAT_SYSTEM('Usage: /cd sound will toggle sound alerts on and off. /cd sound <number> will change the sound played.'); CHAT_SYSTEM('Default: '.. default.soundtype) end;
-	text = function() CHAT_SYSTEM('Usage: /cd text will toggle text alerts on and off.'); CHAT_SYSTEM('Default: '..default.text) end;
+	size = function() CHAT_SYSTEM('Usage: /cd size <scale> will change the size of all cooldown windows.{nl}Default: '..default.size) end;
+	skills = function() CHAT_SYSTEM('Usage: /cd skills will toggle skill tracking on and off.{nl}Default: '..default.skills) end;
+	skillX = function() CHAT_SYSTEM('Usage: /cd skillX <coords> will set the x coordinates for the skill window.{nl}Default: '..default.skillPosX) end;
+	skillY = function() CHAT_SYSTEM('Usage: /cd skillY <coords> will set the y coordinates for the skill window.{nl}Default: '..default.skillPosY) end;
+	skin = function() CHAT_SYSTEM('Usage: /cd skin <number> will change the skin of the cooldown tracker.{nl}Default: '..default.skin) end;
+	sound = function() CHAT_SYSTEM('Usage: /cd sound will toggle sound alerts on and off. /cd sound <number> will change the sound played.{nl}Default: '.. default.soundtype) end;
+	text = function() CHAT_SYSTEM('Usage: /cd text will toggle text alerts on and off.{nl}Default: '..default.text) end;
 }
 
 local CD_SETTINGS_TABLE = {
@@ -195,14 +211,16 @@ local CD_SETTINGS_TABLE = {
 	alert = function(ID)
 		if settings.ignoreList[skillList[ID]] ~= nil then
 			settings.ignoreList[skillList[ID]] = not settings.ignoreList[skillList[ID]]
-			CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..BOOL_TO_WORD(settings.ignoreList[skillList[ID]])..'.')
-			return;
-		end
+		else
 		settings.ignoreList[skillList[ID]] = true
-		CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to on.') end;
+		end
+		return CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..BOOL_TO_WORD(not settings.ignoreList[skillList[ID]])..'.') end;
 	chat = function(ID)
 		if settings.chatList[skillList[ID]] ~= nil then
 			settings.chatList[skillList[ID]] = not settings.chatList[skillList[ID]]
+			if not settings.chatList[skillList[ID]] then
+				ui.Chat('!!')
+			end
 			CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..BOOL_TO_WORD(settings.chatList[skillList[ID]])..'.')
 			return;
 		end
@@ -213,14 +231,27 @@ local CD_SETTINGS_TABLE = {
 	buffX = function(num) settings.buffPosX = num CHAT_SYSTEM('Buff X set to '..num..'.') end;
 	buffY = function(num) settings.buffPosY = num CHAT_SYSTEM('Buff Y set to '..num..'.') end;
 	skin = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
-	list = function() GET_SKILL_LIST() for k,v in ipairs(skillList) do
-		CHAT_SYSTEM('ID '..k..': '..v..' - alert '..BOOL_TO_WORD(settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])) end
+	list = function() GET_SKILL_LIST() local skillStr = ''
+		for k,v in ipairs(skillList) do
+			skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..'{nl}'
+		end
+		CHAT_SYSTEM(skillStr)
 	end;
 	buffs = function() settings.buffs = not settings.buffs CHAT_SYSTEM('Buffs set to '..BOOL_TO_WORD(settings.buffs)..'.') end;
+	skills = function() settings.skills = not settings.skills CHAT_SYSTEM('Skills set to '..BOOL_TO_WORD(settings.skills)..'.') end;
 	reset = function() local ftMessage = settings.firstTimeMessage settings = default settings.firstTimeMessage = ftMessage CHAT_SYSTEM('Settings reset to defaults.') end;
 	help = function(func) CD_HELP_TABLE[func]() end;
 	size = function(num) settings.size = num CHAT_SYSTEM('Size scaling set to '..num..'.') end;
-	status = function() CHAT_SYSTEM('Under construction.') end
+	status = function() CHAT_SYSTEM('{nl} {nl}cdtracker status{nl}Alerts: '..BOOL_TO_WORD(settings.alerts)..
+		'{nl}Text: '..BOOL_TO_WORD(settings.text)..
+		'{nl}Icon: '..BOOL_TO_WORD(settings.icon)..
+		'{nl}Sound: '..BOOL_TO_WORD(settings.sound)..
+		'{nl}Soundtype: '..settings.soundtype..
+		'{nl}Skin: '..settings.skin..
+		'{nl}Skill window coords: '..settings.skillPosX..', '..settings.skillPosY..
+		'{nl}Buff window coords: '..settings.buffPosX..', '..settings.buffPosY..
+		'{nl}Skill window toggle: '..BOOL_TO_WORD(settings.skills)..
+		'{nl}Buff window toggle: '..BOOL_TO_WORD(settings.buffs)) end
 }
 
 setmetatable(CD_SETTINGS_TABLE, mt)
@@ -249,7 +280,13 @@ function CHECK_ICON_EXIST(icon)
 			return k
 		end
 	end
-	cdTrackSkill[skillIndex] = GRAB_SKILL_INFO(icon)
+	newIcon = GRAB_SKILL_INFO(icon)
+	for k,v in pairs(cdTrackSkill) do
+		if cdTrackSkill[k]['fullName'] == newIcon['fullName'] then
+			return k
+		end
+	end
+	cdTrackSkill[skillIndex] = newIcon
 	cdTrackSkill['icon'][skillIndex] = icon
 	skillIndex = skillIndex+1
 	return skillIndex-1
@@ -331,60 +368,66 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	if settings.alerts == false then
 		return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
 	end
-
 	local index = CHECK_ICON_EXIST(icon)
-	if index == 1 then
-		-- run once every loop through all skills
+	if index == 1 then	-- run once every loop through all skills
 		CDTRACK_BUFF_CHECK()
+	end
+	if settings.skills == false then
+		return _G['ICON_UPDATE_SKILL_COOLDOWN_OLD'](icon)
 	end
 
 	cdTrackSkill[index]['curTime'] = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
 	cdTrackSkill[index]['totalTime'] = cdTrackSkill[index]['sklInfo']:GetTotalCoolDownTime();
 	cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
+
 	if cdTrackSkill[index]['prevTime'] - cdTrackSkill[index]['curTimeSecs'] > 1 then
 		cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
 		return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 	end
 	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
+		-- skill ready
 		if cdTrackSkill[index]['curTimeSecs'] == 0 then
-			if settings.sound == true then
-				if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
-					imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
-				else
-					imcSound.PlaySoundEvent(soundTypes[1])
-				end
-			end
-			if settings.text == true and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
-				for i = 1,3 do
-					ui.AddText('SystemMsgFrame',' ')
-				end
-				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
-			end
 			if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
 				ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
 				msgDisplay = true
 				timer = imcTime.GetAppTime()
 			end
-			cdTrackSkill[index]['prevTime'] = 0
-			DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
+			if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
+				if settings.sound == true then
+					if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
+						imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
+					else
+						imcSound.PlaySoundEvent(soundTypes[1])
+					end
+				end
+				if settings.text == true then
+					for i = 1,3 do
+						ui.AddText('SystemMsgFrame',' ')
+					end
+					ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
+				end
+				DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
+			end
 			cdTrackSkill['Slots'][FIND_NEXT_SLOT(index,'SKILL')] = nil
+			cdTrackSkill[index]['prevTime'] = 0
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
-		if settings.text == true and settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
-			for i = 1,3 do
-				ui.AddText('SystemMsgFrame',' ')
-			end
-			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
-		end
+		-- show skill on cd
 		if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
 			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 			msgDisplay = true
 			timer = imcTime.GetAppTime()
 		end
 		if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
+			if settings.text == true then
+				for i = 1,3 do
+					ui.AddText('SystemMsgFrame',' ')
+				end
+				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
+			end
 			cdTrackSkill[index]['slot'] = FIND_NEXT_SLOT(index,'SKILL')
+			DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 		end
-		DISPLAY_SLOT(index, cdTrackSkill[index]['slot'],cdTrackSkill[index]['fullName'],cdTrackSkill[index]['curTimeSecs'], 'SKILL', cdTrackSkill[index]['obj'])
 	end
 	if settings.chatList[cdTrackSkill[index]['fullName']] == true then
 		if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 then

@@ -21,6 +21,7 @@ CHAT_SYSTEM(' ')
 function CHATFX_ON_INIT()
 	acutil.slashCommand('/!!',CHAT_FX_CMD)
 	acutil.slashCommand('/!!set',CHAT_FX_SETTINGS)
+	checkChatFrame = ui.GetFrame('chat')
 end
 
 function CHAT_FX_SET_MSG(msg,style)
