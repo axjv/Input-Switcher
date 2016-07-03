@@ -281,13 +281,15 @@ function CHECK_ICON_EXIST(icon)
 			return k
 		end
 	end
-	newIcon = GRAB_SKILL_INFO(icon)
+	newIconInfo = GRAB_SKILL_INFO(icon)
 	for k,v in pairs(cdTrackSkill) do
-		if cdTrackSkill[k]['fullName'] == newIcon['fullName'] then
+		if cdTrackSkill[k]['fullName'] == newIconInfo['fullName'] then
+            cdTrackSkill[k] = newIconInfo
+            cdTrackSkill['icon'][k] = icon
 			return k
 		end
 	end
-	cdTrackSkill[skillIndex] = newIcon
+	cdTrackSkill[skillIndex] = newIconInfo
 	cdTrackSkill['icon'][skillIndex] = icon
 	skillIndex = skillIndex+1
 	return skillIndex-1
