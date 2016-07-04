@@ -60,14 +60,18 @@ Sets the coordinates for the skill and buff windows.
 
 Sets the size scaling for tracker windows. WARNING: This value is a multiplier to the default size. For example, setting it to 2 will double the width and double the height. Recommended values are between 0.75 and 1.5.
 
+* /cd lock
+
+Toggles frame dragging.
+
 * /cd list
 
 Lists all skills, their IDs and their status.
 
 * /cd alert <ID>
-* /cd chat <ID>
+* /cd chat <ID> <message>
 
-Turns alerts and chat alerts on and off for the selected skill.
+Turns alerts and chat alerts on and off for the selected skill. Message is optional message to send when casting.
 
 * /cd status
 
