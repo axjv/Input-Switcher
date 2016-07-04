@@ -68,8 +68,8 @@ Toggles frame dragging.
 
 Lists all skills, their IDs and their status.
 
-* /cd alert <ID>
-* /cd chat <ID> <message>
+* /cd alert \<ID\>
+* /cd chat \<ID\> \<message\>
 
 Turns alerts and chat alerts on and off for the selected skill. Message is optional message to send when casting.
 
@@ -81,7 +81,7 @@ Shows on/off status for all options.
 
 Resets all settings to default.
 
-* /cd help <command>
+* /cd help \<command\>
 
 Shows information about commands.
 
