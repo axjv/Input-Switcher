@@ -11,6 +11,8 @@ local default = {
 	checkVal = 5;
 	firstTimeMessage = false;
 	ignoreList = {};
+    lock = false;
+    message = {};
 	size = 1;
 	skillPosX = 700;
 	skillPosY = 225;
@@ -51,6 +53,7 @@ local CD_DRAG_STATE = false
 -- timer for chat notification
 local timer = imcTime.GetAppTime()
 local msgDisplay = false
+local castMessage = false
 local checkChatFrame = ui.GetFrame('chat')
 -- begin main body
 function CDTRACKER_ON_INIT(addon, frame)
@@ -138,7 +141,7 @@ local mt = {__index = function (t,k)
 		else
 			CHAT_SYSTEM('Invalid command. Valid command format: /cd <command>'..
 			'{nl} {nl}'..
-			'{nl}Toggle commands: on, off, sound, text, buffs, skills, alert <ID>, chat <ID>'..
+			'{nl}Toggle commands: on, off, sound, text, buffs, skills, lock, alert <ID>, chat <ID> <message>'..
 			'{nl}Setting commands: <number>, sound <number>, skin <number>, size <number>, skillX <number>, skillY <number>, buffX <number>, buffY <number>'..
 			'{nl}Status commands: list, status'..
 			'{nl}System commands: reset, help help all'..
@@ -161,11 +164,12 @@ helpBoxTable = {
 		"/cd size <number>{#000000} will let you modify the size scaling of windows. (Default: 1){nl} {nl}{#03134d}"..
 		"/cd skillX <number>{nl}/cd skillY <number>{nl}"..
 		"/cd buffX <number>{nl}/cd buffY <number>{nl} {nl}{#000000}allow you to manually position the skill and buff windows. Dragging also works.{nl} {nl}{#03134d}"..
+    	"/cd lock{nl} {nl}{#000000} will lock all frames in place.{nl} {nl}{#03134d}"..
 		"/cd showframes{nl}{#000000}will show you draggable frames to set window positions.","helpBoxTable.helpBox_3()","helpBoxTable.helpBox_3()") end;
 	helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}"..
 		"/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}"..
 		"/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}"..
-		"/cd chat <ID>{#000000} toggles yellowtext (!!) broadcasting for specific skills.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
+		"/cd chat <ID> <message>{#000000} toggles yellowtext (!!) broadcasting for specific skills. Message is optional custom message when casting.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
 	helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}"..
 		"/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}"..
 		"/cd help <command>{#000000} will show a short explanation about a command.{nl} {nl}{#03134d}"..
@@ -178,9 +182,10 @@ local CD_HELP_TABLE = {
 	buffs = function() CHAT_SYSTEM('Usage: /cd buffs will toggle buff tracking on and off.{nl}Default: '..default.buffs) end;
 	buffX = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.{nl}Default: '..default.buffPosX) end;
 	buffY = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.{nl}Default: '..default.buffPosY) end;
-	chat = function() CHAT_SYSTEM('Usage: /cd chat <ID> will toggle chat alerts for a single skill.') end;
+	chat = function() CHAT_SYSTEM('Usage: /cd chat <ID> <message> will toggle chat alerts for a single skill. Message is optional message to send when casting.') end;
 	help = function() CHAT_SYSTEM('Usage: /cd help <command> will open what you\'re reading.') end;
 	list = function() CHAT_SYSTEM('Usage: /cd list will list all skills along with their ID.') end;
+    lock = function() CHAT_SYSTEM('Usage: /cd lock will lock all frames in place.{nl}Default: Off') end;
 	off = function() CHAT_SYSTEM('Usage: /cd off will turn all alerts off.{nl}Default: '..default.alerts) end;
 	on = function() CHAT_SYSTEM('Usage: /cd on will reenable alerts. Your settings will be saved.{nl}Default: On') end;
 	reset = function() CHAT_SYSTEM('Usage: /cd reset will reset all settings to default.') end;
@@ -215,7 +220,12 @@ local CD_SETTINGS_TABLE = {
 		settings.ignoreList[skillList[ID]] = true
 		end
 		return CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..BOOL_TO_WORD(not settings.ignoreList[skillList[ID]])..'.') end;
-	chat = function(ID)
+	chat = function(ID, castmessage)
+        if castmessage ~= nil then
+            settings.message[skillList[ID]] = castmessage
+            CHAT_SYSTEM(skillList[ID]..' on cast will show: '..castmessage)
+            return;
+        end
 		if settings.chatList[skillList[ID]] ~= nil then
 			settings.chatList[skillList[ID]] = not settings.chatList[skillList[ID]]
 			if not settings.chatList[skillList[ID]] then
@@ -238,6 +248,7 @@ local CD_SETTINGS_TABLE = {
 		end
 		CHAT_SYSTEM(skillStr)
 	end;
+    lock = function() settings.lock = not settings.lock CHAT_SYSTEM('Frame lock '..BOOL_TO_WORD(settings.lock)..'.') end;
 	buffs = function() settings.buffs = not settings.buffs CHAT_SYSTEM('Buffs set to '..BOOL_TO_WORD(settings.buffs)..'.') end;
 	skills = function() settings.skills = not settings.skills CHAT_SYSTEM('Skills set to '..BOOL_TO_WORD(settings.skills)..'.') end;
 	reset = function() local ftMessage = settings.firstTimeMessage settings = default settings.firstTimeMessage = ftMessage CHAT_SYSTEM('Settings reset to defaults.') end;
@@ -246,6 +257,7 @@ local CD_SETTINGS_TABLE = {
 	status = function() CHAT_SYSTEM('{nl} {nl}cdtracker status{nl}Alerts: '..BOOL_TO_WORD(settings.alerts)..
 		'{nl}Text: '..BOOL_TO_WORD(settings.text)..
 		'{nl}Sound: '..BOOL_TO_WORD(settings.sound)..
+        '{nl}Lock: '..BOOL_TO_WORD(settings.lock)..
 		'{nl}Soundtype: '..settings.soundtype..
 		'{nl}Skin: '..settings.skin..
 		'{nl}Size: '..settings.size..
@@ -261,6 +273,7 @@ setmetatable(CD_HELP_TABLE, mt)
 function CD_TRACKER_CHAT_CMD(command)
 	local cmd = ''
 	local arg1 = ''
+    local arg2 = ''
 	if #command > 0 then
 		cmd = table.remove(command, 1)
 	end
@@ -270,7 +283,15 @@ function CD_TRACKER_CHAT_CMD(command)
 			arg1 = tonumber(arg1)
 		end
 	end
-	CD_SETTINGS_TABLE[cmd](arg1)
+    if #command > 0 then
+        arg2 = table.remove(command,1)
+        while #command > 0 do
+            arg2 = arg2..' '..table.remove(command,1)
+        end
+        CD_SETTINGS_TABLE[cmd](arg1, arg2)
+    else
+        CD_SETTINGS_TABLE[cmd](arg1)
+    end
 	CDTRACKER_SAVESETTINGS()
 	return;
 end
@@ -371,8 +392,13 @@ function ICON_USE_HOOKED(object, reAction)
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
 		if settings.chatList[cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
-			ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
+            if settings.message[cdTrackSkill[index]['fullName']] then
+                ui.Chat('!!'..settings.message[cdTrackSkill[index]['fullName']])
+            else
+			    ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
+            end
 			msgDisplay = true
+            castMessage = true
 			timer = imcTime.GetAppTime()
 		end
 	else
@@ -400,7 +426,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
 		-- skill ready
 		if cdTrackSkill[index]['curTimeSecs'] == 0 then
-			if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
+			if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
 				ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
 				msgDisplay = true
 				timer = imcTime.GetAppTime()
@@ -427,7 +453,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
 		end
 		-- show skill on cd
-		if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 then
+		if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
 			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 			msgDisplay = true
 			timer = imcTime.GetAppTime()
@@ -448,6 +474,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 	if settings.chatList[cdTrackSkill[index]['fullName']] == true then
 		if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 then
 			ui.Chat('!!')
+            castMessage = false
 			msgDisplay = false
 		end
 	end
@@ -532,7 +559,12 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
 	iconFrame:Resize(settings.size * 50,settings.size * 50)
 	cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
 	cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP('"..cdtype.."',"..slot..")");
-	cdFrame:EnableHitTest(1)
+    if settings.lock then
+        cdFrame:EnableHitTest(0)
+    else
+        cdFrame:EnableHitTest(1)
+    end
+
 	-- position elements
 	skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15*settings.size),0)
 	skillFrame['name_'..cdtype][slot]:SetOffset(math.ceil(140*settings.size),0)
@@ -646,7 +678,7 @@ function GET_SKILL_LIST()
 end
 -- time calc for chat notification
 function TIME_ELAPSED(val)
-	local elapsed = math.floor(imcTime.GetAppTime() - timer)
+	local elapsed = imcTime.GetAppTime() - timer
 	if elapsed > val then
 		timer = imcTime.GetAppTime()
 		return true
