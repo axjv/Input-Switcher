@@ -273,7 +273,7 @@ setmetatable(CD_HELP_TABLE, mt)
 function CD_TRACKER_CHAT_CMD(command)
   local cmd = ''
   local arg1 = ''
-    local arg2 = ''
+  local arg2 = ''
   if #command > 0 then
     cmd = table.remove(command, 1)
   end
