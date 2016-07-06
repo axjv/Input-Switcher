@@ -96,7 +96,7 @@ end
 function CD_DRAG_STOP(cdtype, slot)
     CD_DRAG_STATE = false
     local cdFrame = skillFrame['cdFrame_'..cdtype][tonumber(slot)]
-     local xPos = cdFrame:GetX()
+    local xPos = cdFrame:GetX()
     local yPos = cdFrame:GetY()
 
     if cdtype == 'SKILL' then
@@ -201,7 +201,7 @@ local CD_HELP_TABLE = {
 
 local CD_SETTINGS_TABLE = {
     on = function() settings.alerts = true CHAT_SYSTEM('Alerts on.') end;
-    off = function() settings.alerts = false CHAT_SYSTEM('Alerts off.') end;
+    off = function() settings.alerts = false CD_DESTROY() CHAT_SYSTEM('Alerts off.') end;
     sound = function(num)
             if type(num) == 'number' then
                 settings.soundtype = num
@@ -379,6 +379,8 @@ end
 
 function ICON_USE_HOOKED(object, reAction)
     _G['ICON_USE_OLD'](object, reAction);
+    CHANGE_MOUSE_CURSOR("MORU", "MORU_UP", "CURSOR_CHECK_REINF");
+    RESET_MOUSE_CURSOR();
     local iconPt = object;
     if iconPt  ~=  nil then
         local icon = tolua.cast(iconPt, 'ui::CIcon');
@@ -557,14 +559,14 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
     end
     cdFrame:Resize(settings.size * 325,settings.size * 50)
     iconFrame:Resize(settings.size * 50,settings.size * 50)
-    cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
-    cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP('"..cdtype.."',"..slot..")");
     if settings.lock then
         cdFrame:EnableHitTest(0)
     else
         cdFrame:EnableHitTest(1)
+        cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
+        cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP('"..cdtype.."',"..slot..")");
     end
-
+    iconFrame:EnableHitTest(0)
     -- position elements
     skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15*settings.size),0)
     skillFrame['name_'..cdtype][slot]:SetOffset(math.ceil(140*settings.size),0)
@@ -688,4 +690,17 @@ end
 function CDTRACKER_SHOW_FRAMES()
     DISPLAY_SLOT(1, 1, 'Skill Frame', 1, 'SKILL', cdTrackSkill[1]['obj'], 999)
     DISPLAY_SLOT(1, 1, 'Buff Frame', 1, 'BUFF',  cdTrackSkill[1]['obj'], 999)
+end
+
+function CD_DESTROY()
+    local cdtype = 'SKILL'
+    for slot = 1,#skillFrame['cdFrame_'..cdtype] do
+        ui.DestroyFrame('FRAME_'..cdtype..slot)
+        ui.DestroyFrame('ICONFRAME_'..cdtype..slot)
+    end
+    local cdtype = 'BUFF'
+    for slot = 1,#skillFrame['cdFrame_'..cdtype] do
+        ui.DestroyFrame('FRAME_'..cdtype..slot)
+        ui.DestroyFrame('ICONFRAME_'..cdtype..slot)
+    end
 end
