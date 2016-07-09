@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <uiframe name="cdtracker" x="0" y="0" width="500" height="500" create="open">
 	<frame title="" stretch="true" snapclient="true" snapframe="true" layout_gravity="center center" margin="0 0 0 0" hideable="false"/>
-    <option visible="true" alwaysVisible="false"/>
+    <option visible="true" alwaysVisible="false" hideable="false"/>
 	<input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
     <layer layerlevel="0"/>
 	<draw drawnotitlebar="false" drawtitlebar="false" drawframe="true"/>

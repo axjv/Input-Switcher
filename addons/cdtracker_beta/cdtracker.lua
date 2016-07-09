@@ -40,7 +40,7 @@ end
 
 local cdTrackType = {}
 -- store frame data
-local skillFrame = {}
+skillFrame = {}
 local cdTypeList = {'SKILL','BUFF','DEBUFF'}
 local cdFrameList = {'name_','type_','cooldown_','icon_','iconFrame_','cdFrame_'}
 for kf,vf in pairs(cdFrameList) do
@@ -363,24 +363,10 @@ function FIND_NEXT_SLOT(index, cdtype)
     table.insert(cdTrackType['Slots'],index)
     return #cdTrackType['Slots']
 end
--- prune empty slots
-function CLEANUP_SLOTS()
-    for k,v in pairs(cdTrackBuff['slot']) do
-        if cdTrackBuff['time'][k] == 0 then
-            cdTrackBuff['Slots'][FIND_NEXT_SLOT(k,'BUFF')] = nil
-        end
-    end
-    for k,v in pairs(cdTrackSkill) do
-        if cdTrackSkill[k]['curTime'] == 0 then
-            cdTrackSkill['Slots'][FIND_NEXT_SLOT(k,'SKILL')] = nil
-        end
-    end
-end
-
 function ICON_USE_HOOKED(object, reAction)
     _G['ICON_USE_OLD'](object, reAction);
-    CHANGE_MOUSE_CURSOR("MORU", "MORU_UP", "CURSOR_CHECK_REINF");
-    RESET_MOUSE_CURSOR();
+    -- CHANGE_MOUSE_CURSOR("MORU", "MORU_UP", "CURSOR_CHECK_REINF");
+    -- RESET_MOUSE_CURSOR();
     local iconPt = object;
     if iconPt  ~=  nil then
         local icon = tolua.cast(iconPt, 'ui::CIcon');
@@ -691,16 +677,19 @@ function CDTRACKER_SHOW_FRAMES()
     DISPLAY_SLOT(1, 1, 'Skill Frame', 1, 'SKILL', cdTrackSkill[1]['obj'], 999)
     DISPLAY_SLOT(1, 1, 'Buff Frame', 1, 'BUFF',  cdTrackSkill[1]['obj'], 999)
 end
-
-function CD_DESTROY()
-    local cdtype = 'SKILL'
-    for slot = 1,#skillFrame['cdFrame_'..cdtype] do
-        ui.DestroyFrame('FRAME_'..cdtype..slot)
-        ui.DestroyFrame('ICONFRAME_'..cdtype..slot)
-    end
-    local cdtype = 'BUFF'
-    for slot = 1,#skillFrame['cdFrame_'..cdtype] do
-        ui.DestroyFrame('FRAME_'..cdtype..slot)
-        ui.DestroyFrame('ICONFRAME_'..cdtype..slot)
+-- prune empty slots
+function CLEANUP_SLOTS()
+    local cdtypes = {'SKILL','BUFF'}
+    for index, cdtype in pairs(cdtypes) do
+        for slot = 1,#skillFrame['cdFrame_'..cdtype] do
+            if ui.IsFrameVisible('FRAME_'..cdtype..slot) == 0 then
+                if cdtype == 'SKILL' then
+                    cdTrackSkill['Slots'][slot] = nil
+                end
+                if cdtype == 'BUFF' then
+                    cdTrackBuff['Slots'][slot] = nil
+                end
+            end
+        end
     end
 end
