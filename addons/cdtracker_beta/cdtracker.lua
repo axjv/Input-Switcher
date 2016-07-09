@@ -679,17 +679,30 @@ function CDTRACKER_SHOW_FRAMES()
 end
 -- prune empty slots
 function CLEANUP_SLOTS()
-    local cdtypes = {'SKILL','BUFF'}
-    for index, cdtype in pairs(cdtypes) do
-        for slot = 1,#skillFrame['cdFrame_'..cdtype] do
-            if ui.IsFrameVisible('FRAME_'..cdtype..slot) == 0 then
-                if cdtype == 'SKILL' then
-                    cdTrackSkill['Slots'][slot] = nil
-                end
-                if cdtype == 'BUFF' then
-                    cdTrackBuff['Slots'][slot] = nil
-                end
-            end
+    for k,v in pairs(cdTrackBuff['slot']) do
+        if cdTrackBuff['time'][k] == 0 then
+            cdTrackBuff['Slots'][FIND_NEXT_SLOT(k,'BUFF')] = nil
+        end
+    end
+    for k,v in pairs(cdTrackSkill) do
+        if cdTrackSkill[k]['curTime'] == 0 then
+            cdTrackSkill['Slots'][FIND_NEXT_SLOT(k,'SKILL')] = nil
         end
     end
 end
+--
+-- function CLEANUP_SLOTS()
+--     local cdtypes = {'SKILL','BUFF'}
+--     for index, cdtype in pairs(cdtypes) do
+--         for slot = 1,#skillFrame['cdFrame_'..cdtype] do
+--             if ui.IsFrameVisible('FRAME_'..cdtype..slot) == 0 then
+--                 if cdtype == 'SKILL' then
+--                     cdTrackSkill['Slots'][slot] = nil
+--                 end
+--                 if cdtype == 'BUFF' then
+--                     cdTrackBuff['Slots'][slot] = nil
+--                 end
+--             end
+--         end
+--     end
+-- end
