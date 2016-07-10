@@ -42,5 +42,18 @@
 			"scroll",
 			"marquee"
 		]
+	},
+	{
+		"name" : "Persistent Chat",
+		"file" : "persistentchat",
+		"extension" : "ipf",
+		"fileVersion" : "v0.0.1",
+		"releaseTag" : "honeydew",
+		"unicode" : "⛄",
+		"description" : "Stay on the same chat channel between zones.",
+		"tags" : [
+			"chat",
+			"channel"
+		]
 	}
 ]
