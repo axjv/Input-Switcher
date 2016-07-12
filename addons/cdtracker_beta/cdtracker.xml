@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<uiframe name="cdtracker" x="0" y="0" width="500" height="500" create="open">
+<uiframe name="cdtracker" x="0" y="0" width="0" height="0" create="open">
 	<frame title="" stretch="true" snapclient="true" snapframe="true" layout_gravity="center center" margin="0 0 0 0" hideable="false"/>
     <option visible="true" alwaysVisible="false" hideable="false"/>
 	<input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
