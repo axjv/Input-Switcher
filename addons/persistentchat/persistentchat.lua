@@ -14,7 +14,7 @@ function ui.ProcessReturnKey_HOOKED()
     local titleCtrl = GET_CHILD(frame,'edit_to_bg');
     local name  = GET_CHILD(titleCtrl,'title_to');
 
-    if currentChatType ~= name:GetText() and frame:IsVisible() == 0 then
+    if currentChatType ~= name:GetText() and frame:IsVisible() == 0 and name:GetText():sub(1,2) ~= 'To' then
         ui.SetChatType(chatTypes[currentChatType])
     end
     currentChatType = name:GetText()

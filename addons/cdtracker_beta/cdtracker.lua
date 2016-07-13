@@ -33,7 +33,7 @@ cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon']  = {}
 
 local cdTrackBuff = {}
-cdBuffList        = {'time','prevTime','name','slot','class','Slots'}
+cdBuffList        = {'time','prevTime','slot','class','Slots'}
 for k,v in pairs(cdBuffList) do
     cdTrackBuff[v] = {}
 end
@@ -76,6 +76,16 @@ function CDTRACKER_ON_INIT(addon, frame)
         settings.firstTimeMessage = true
         CDTRACKER_SAVESETTINGS()
     end
+    local convertList = {settings.ignoreList, settings.chatList, settings.message}
+    for k,v in pairs(convertList) do
+        for i,j in pairs(v) do
+            if string.sub(i,1,1) ~= '[' then
+                v['[Skill] '..i] = j
+                v[i] = nil
+            end
+        end
+    end
+    CDTRACKER_SAVESETTINGS()
 end
 -- if resting, keep skillbar alive
 function QUICKSLOTNEXPBAR_KEEPVISIBLE()
@@ -214,12 +224,18 @@ local CD_SETTINGS_TABLE = {
                 end;
     text       = function() settings.text = not settings.text CHAT_SYSTEM('Text set to '..BOOL_TO_WORD(settings.text)..'.') end;
     alert      = function(ID)
-                if settings.ignoreList[skillList[ID]]  ~= nil then
-                    settings.ignoreList[skillList[ID]] = not settings.ignoreList[skillList[ID]]
+                if ID <= #skillList then
+                    listType = skillList
                 else
-                settings.ignoreList[skillList[ID]]     = true
+                    listType = buffList
+                    ID = ID - #skillList
                 end
-                return CHAT_SYSTEM('Alerts for '..skillList[ID]..' set to '..BOOL_TO_WORD(not settings.ignoreList[skillList[ID]])..'.') end;
+                if settings.ignoreList[listType[ID]]  ~= nil then
+                    settings.ignoreList[listType[ID]] = not settings.ignoreList[listType[ID]]
+                else
+                    settings.ignoreList[listType[ID]] = true
+                end
+                return CHAT_SYSTEM('Alerts for '..listType[ID]..' set to '..BOOL_TO_WORD(not settings.ignoreList[listType[ID]])..'.') end;
     chat       = function(ID, castmessage)
                 if castmessage                         ~= nil then
                     settings.message[skillList[ID]]    = castmessage
@@ -242,9 +258,17 @@ local CD_SETTINGS_TABLE = {
     buffY      = function(num) settings.buffPosY = num CHAT_SYSTEM('Buff Y set to '..num..'.') end;
     showframes = function() CDTRACKER_SHOW_FRAMES() end;
     skin       = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
-    list       = function() GET_SKILL_LIST() local skillStr = ''
+    list       = function() GET_SKILL_LIST() local skillStr = 'Skills:{nl}'
                 for k,v in ipairs(skillList) do
                     skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(not settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..'{nl}'
+                end
+                GET_BUFF_LIST()
+                if #buffList > 0 then
+                    skillStr = '{nl}'..skillStr..'Buffs:{nl}'
+                    for k,v in ipairs(buffList) do
+                        skillStr = skillStr..'ID '..k+#skillList..': '..v..' - alert '..BOOL_TO_WORD(not settings.ignoreList[v])..'{nl}'
+                    end
+
                 end
                 CHAT_SYSTEM(skillStr)
                 end;
@@ -377,9 +401,9 @@ function ICON_USE_HOOKED(object, reAction)
             end
             ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
         end
-        if settings.chatList[cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
-            if settings.message[cdTrackSkill[index]['fullName']] then
-                ui.Chat('!!'..settings.message[cdTrackSkill[index]['fullName']])
+        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
+            if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
+                ui.Chat('!!'..settings.message['[Skill] '..cdTrackSkill[index]['fullName']])
             else
                 ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
             end
@@ -412,12 +436,12 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
     if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
         -- skill ready
         if cdTrackSkill[index]['curTimeSecs'] == 0 then
-            if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
+            if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
                 ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
                 msgDisplay = true
                 timer = imcTime.GetAppTime()
             end
-            if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
+            if settings.ignoreList['[Skill] '..cdTrackSkill[index]['fullName']] ~= true then
                 if settings.sound == true then
                     if settings.soundtype > 0 and settings.soundtype <= table.getn(soundTypes) then
                         imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
@@ -439,12 +463,12 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
             return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
         end
         -- show skill on cd
-        if settings.chatList[cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
+        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
             ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
             msgDisplay = true
             timer = imcTime.GetAppTime()
         end
-        if settings.ignoreList[cdTrackSkill[index]['fullName']] ~= true then
+        if settings.ignoreList['[Skill] '..cdTrackSkill[index]['fullName']] ~= true then
             if settings.text == true then
                 for i = 1,3 do
                     ui.AddText('SystemMsgFrame',' ')
@@ -457,7 +481,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
             end
         end
     end
-    if settings.chatList[cdTrackSkill[index]['fullName']] == true then
+    if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true then
         if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 then
             ui.Chat('!!')
             castMessage = false
@@ -485,7 +509,9 @@ function CDTRACK_BUFF_CHECK()
                 if buff ~= nil then
                     cdTrackBuff['time'][cls.Name]  = math.ceil(buff.time/1000)
                     cdTrackBuff['class'][cls.Name] = cls
-                    CDTRACK_BUFF_DISPLAY(cls.Name,buff.buffID)
+                    if settings.ignoreList['[Buff] '..dictionary.ReplaceDicIDInCompStr(cls.Name)] ~= true then
+                        CDTRACK_BUFF_DISPLAY(cls.Name,buff.buffID)
+                    end
                 end
             end
         end
@@ -658,11 +684,21 @@ function GET_SKILL_LIST()
     skillList = {}
     for k,v in pairs(cdTrackSkill) do
         if type(tonumber(k)) == 'number' then
-            skillList[k] = cdTrackSkill[k]['fullName']
+            skillList[k] = '[Skill] '..cdTrackSkill[k]['fullName']
         end
     end
     table.sort(skillList)
 end
+
+function GET_BUFF_LIST()
+    buffList = {}
+    for k,v in pairs(cdTrackBuff['class']) do
+        local buffname = dictionary.ReplaceDicIDInCompStr(k)
+        table.insert(buffList, '[Buff] '..buffname)
+    end
+    table.sort(buffList)
+end
+
 -- time calc for chat notification
 function TIME_ELAPSED(val)
     local elapsed = imcTime.GetAppTime() - timer
