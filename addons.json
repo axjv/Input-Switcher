@@ -19,8 +19,8 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v2.6.1-beta",
-		"releaseTag" : "kiwi",
+		"fileVersion" : "v2.6.0-beta",
+		"releaseTag" : "jackfruit",
 		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Includes text notifications, sound alerts, and chat message alerts.\nType '/cd help all' in game for a list of commands.\nRefer to the README on the website for information.",
 		"tags" : [
