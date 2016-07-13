@@ -56,4 +56,18 @@
 			"channel"
 		]
 	}
+	{
+		"name" : "Regen Timer",
+		"file" : "regentimer",
+		"extension" : "ipf",
+		"fileVersion" : "v0.0.1",
+		"releaseTag" : "lemon",
+		"unicode" : "⛄",
+		"description" : "Keep track of regeneration and when you can sit to regen.",
+		"tags" : [
+			"regen",
+			"sp",
+			"timer"
+		]
+	}
 ]
