@@ -59,6 +59,7 @@ local checkChatFrame = ui.GetFrame('chat')
 function CDTRACKER_ON_INIT(addon, frame)
     acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
     acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
+    acutil.setupHook(SetKeyboardSelectMode_HOOKED,'SetKeyboardSelectMode')
     addon:RegisterMsg('RESTQUICKSLOT_OPEN', 'QUICKSLOTNEXPBAR_KEEPVISIBLE');
     addon:RegisterMsg('RESTQUICKSLOT_CLOSE', 'QUICKSLOTNEXPBAR_RESTORE');
     cdTrackSkill          = {}
@@ -87,6 +88,13 @@ function CDTRACKER_ON_INIT(addon, frame)
     end
     CDTRACKER_SAVESETTINGS()
 end
+
+local kbSelectMode = 0
+function SetKeyboardSelectMode_HOOKED(mode)
+    kbSelectMode = mode
+    return _G['SetKeyboardSelectMode_OLD'](mode)
+end
+
 -- if resting, keep skillbar alive
 function QUICKSLOTNEXPBAR_KEEPVISIBLE()
     local quickSlotBar = ui.GetFrame('quickslotnexpbar')
@@ -542,6 +550,9 @@ function CDTRACK_BUFF_DISPLAY(name,ID)
 end
 -- draw frame to screen
 function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
+    if kbSelectMode == 1 then
+        return;
+    end
     CLEANUP_SLOTS()
     cdFrame   = ui.CreateNewFrame('cdtracker','FRAME_'..cdtype..slot)
     iconFrame = ui.CreateNewFrame('cdtracker','ICONFRAME_'..cdtype..slot)
