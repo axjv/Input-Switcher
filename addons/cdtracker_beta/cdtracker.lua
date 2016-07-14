@@ -413,7 +413,8 @@ function ICON_USE_HOOKED(object, reAction)
             if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
                 ui.Chat('!!'..settings.message['[Skill] '..cdTrackSkill[index]['fullName']])
             else
-                ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
+                local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+                ui.Chat('!!Casting '..skillName..'!');
             end
             msgDisplay  = true
             castMessage = true
@@ -445,7 +446,8 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         -- skill ready
         if cdTrackSkill[index]['curTimeSecs'] == 0 then
             if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-                ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
+                local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+                ui.Chat('!!'..skillName..' ready!')
                 msgDisplay = true
                 timer = imcTime.GetAppTime()
             end
@@ -472,7 +474,8 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         end
         -- show skill on cd
         if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-            ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
+            local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+            ui.Chat('!!'..skillName..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
             msgDisplay = true
             timer = imcTime.GetAppTime()
         end
@@ -738,4 +741,18 @@ function CLEANUP_SLOTS()
             end
         end
     end
+end
+
+function SANITIZE_SKILL_NAME(skillName)
+    local blockedSkillNameList = {
+        {search = 'Mass Heal', replace = 'Mаss Heal'} -- a here is U+0430
+    }
+
+    for i = 1, #blockedSkillNameList do
+        local pattern = blockedSkillNameList[i];
+        if (string.find(skillName, pattern.search)) then
+            return string.gsub(skillName, pattern.search, pattern.replace);
+        end
+    end
+    return skillName;
 end

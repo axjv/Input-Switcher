@@ -288,7 +288,8 @@ function ICON_USE_HOOKED(object, reAction)
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
 		if settings.chatList[fullName] == 1 and cdCheck == 0 then
-			ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
+			local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+			ui.Chat('!!Casting '..skillName..'!')
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
@@ -323,7 +324,8 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 				ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready.')
 			end
 			if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
-				ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
+				local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+				ui.Chat('!!'..skillName..' ready!')
 				msgDisplay = 1
 				timer = imcTime.GetAppTime()
 			end
@@ -341,7 +343,8 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
 			ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 		end
 		if settings.chatList[cdTrackSkill[index]['fullName']] == 1 then
-			ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
+			local skillName = SANITIZE_SKILL_NAME(cdTrackSkill[index]['fullName']);
+			ui.Chat('!!'..skillName..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
 			msgDisplay = 1
 			timer = imcTime.GetAppTime()
 		end
@@ -415,4 +418,18 @@ function TIME_ELAPSED(val)
 		return true
 	end
 	return false
+end
+
+function SANITIZE_SKILL_NAME(skillName)
+	local blockedSkillNameList = {
+		{search = 'Mass Heal', replace = 'Mаss Heal'} -- a here is U+0430
+	}
+
+	for i = 1, #blockedSkillNameList do
+		local pattern = blockedSkillNameList[i];
+		if (string.find(skillName, pattern.search)) then
+			return string.gsub(skillName, pattern.search, pattern.replace);
+		end
+	end
+	return skillName;
 end
