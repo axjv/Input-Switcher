@@ -23,7 +23,7 @@ local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off'}
 local fpsThresh = {5,10,20}
 
 function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
-    timeElapsed = timeElapsed + (imcTime.GetAppTime() - timer)
+    timeElapsed = imcTime.GetAppTime() - timer
     effectFrame = ui.GetFrame('EFFECTS_FRAME')
     if effectFrame == nil then
         effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
