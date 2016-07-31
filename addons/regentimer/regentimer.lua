@@ -7,10 +7,9 @@ local prevSP = stat.SP
 local settings = {}
 local default = {pos = {x = 470,y = 60},lock = 1}
 local acutil = require('acutil')
-
+CHAT_SYSTEM('Regen timer loaded. /regenlock to lock frame.')
 function REGENTIMER_ON_INIT(addon, frame)
     frame:ShowWindow(1);
-    CHAT_SYSTEM('Regen timer loaded. /regenlock to lock frame.')
     acutil.slashCommand('/regenlock',REGEN_TIMER_LOCK)
     REGEN_TIMER_LOADSETTINGS()
     REGEN_TIMER_CREATE_FRAME()
