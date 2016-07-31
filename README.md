@@ -4,6 +4,12 @@ Addons for Tree of Savior.
 
 ## Addons
 
+#### sfxtoggle
+
+Less lagging, more savior-ing.
+
+* /effect - toggles automatic graphics settings on/off
+
 #### chatfx
 
 Be like all the cool kids. Make your text wiggle.
