@@ -2,7 +2,7 @@ local acutil = require('acutil');
 function SFXTOGGLE_ON_INIT(addon, frame)
 	frame:ShowWindow(1);
 	acutil.slashCommand('/effect',SFX_TOGGLE);
-    acutil.setupHook(FPS_ON_MSG_HOOKED,"FPS_ON_MSG")
+    addon:RegisterMsg('FPS_UPDATE', 'FPS_SFXTOGGLE');
     effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
     effectFrame:ShowWindow(1)
     effectFrame:SetBorder(5, 0, 0, 0)
@@ -16,9 +16,9 @@ end
 local effectToggle = 1
 local lowMode = 0
 local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off'}
-local fpsThresh = {5,10,15}
+local fpsThresh = {5,10,20}
 
-function FPS_ON_MSG_HOOKED(frame, msg, argStr, argNum)
+function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
     if effectToggle == 1 then
         local fpsnumber = tonumber(argStr)
         if fpsnumber < fpsThresh[1] then
@@ -27,7 +27,7 @@ function FPS_ON_MSG_HOOKED(frame, msg, argStr, argNum)
             imcperfOnOff.EnableIMCEffect(0);
             imcperfOnOff.EnableEffect(0);
             SET_EFFECT_MODE(effectSwitch)
-        elseif fpsnumber < fpsThresh[2] and lowMode ~= 1 then
+        elseif fpsnumber < fpsThresh[2] and lowMode == 0 then
             effectSwitch = 0
             lowMode = 1
             imcperfOnOff.EnableIMCEffect(1);
@@ -41,8 +41,6 @@ function FPS_ON_MSG_HOOKED(frame, msg, argStr, argNum)
             imcperfOnOff.EnableEffect(1);
         end
     end
-
-    _G['FPS_ON_MSG_OLD'](frame, msg, argStr, argNum)
 end
 
 function SET_EFFECT_MODE(effectSwitch)
