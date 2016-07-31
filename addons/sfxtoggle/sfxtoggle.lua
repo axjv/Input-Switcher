@@ -27,6 +27,12 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
             imcperfOnOff.EnableIMCEffect(0);
             imcperfOnOff.EnableEffect(0);
             SET_EFFECT_MODE(effectSwitch)
+        elseif fpsnumber > fpsThresh[2] and lowMode == 2 then
+            effectSwitch = 0
+            lowMode = 1
+            imcperfOnOff.EnableIMCEffect(1);
+            imcperfOnOff.EnableEffect(1);
+            SET_EFFECT_MODE(effectSwitch)
         elseif fpsnumber < fpsThresh[2] and lowMode == 0 then
             effectSwitch = 0
             lowMode = 1
