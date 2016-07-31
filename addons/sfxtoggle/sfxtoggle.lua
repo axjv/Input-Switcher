@@ -1,5 +1,8 @@
 local acutil = require('acutil');
 local effectFrame = nil
+local timer = imcTime.GetAppTime()
+local timeElapsed = 0
+
 function SFXTOGGLE_ON_INIT(addon, frame)
 	frame:ShowWindow(1);
 	acutil.slashCommand('/effect',SFX_TOGGLE);
@@ -20,6 +23,7 @@ local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off'}
 local fpsThresh = {5,10,20}
 
 function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
+    timeElapsed = timeElapsed + (imcTime.GetAppTime() - timer)
     effectFrame = ui.GetFrame('EFFECTS_FRAME')
     if effectFrame == nil then
         effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
@@ -30,7 +34,9 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
         effectText:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
         effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
     end
-    if effectToggle == 1 then
+    if effectToggle == 1 and timeElapsed > 3 then
+        timeElapsed = 0
+        timer = imcTime.GetAppTime()
         local fpsnumber = tonumber(argStr)
         if fpsnumber < fpsThresh[1] then
             effectSwitch = 0
