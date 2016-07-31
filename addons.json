@@ -19,8 +19,8 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v2.6.2-beta",
-		"releaseTag" : "kiwi",
+		"fileVersion" : "v2.7.0",
+		"releaseTag" : "mango",
 		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Includes text notifications, sound alerts, and chat message alerts.\nType '/cd help all' in game for a list of commands.\nRefer to the README on the website for information.",
 		"tags" : [
@@ -47,8 +47,8 @@
 		"name" : "Persistent Chat",
 		"file" : "persistentchat",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.2",
-		"releaseTag" : "kiwi",
+		"fileVersion" : "v0.0.3",
+		"releaseTag" : "mango",
 		"unicode" : "⛄",
 		"description" : "Stay on the same chat channel between zones.",
 		"tags" : [
@@ -68,6 +68,20 @@
 			"regen",
 			"sp",
 			"timer"
+		]
+	},
+	{
+		"name" : "SFX Toggle",
+		"file" : "sfxtoggle",
+		"extension" : "ipf",
+		"fileVersion" : "v0.0.1",
+		"releaseTag" : "mango",
+		"unicode" : "⛄",
+		"description" : "Automatically change graphics settings based on fps. /effect to toggle",
+		"tags" : [
+			"graphics",
+			"effects",
+			"fps"
 		]
 	}
 ]
