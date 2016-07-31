@@ -1,4 +1,4 @@
-currentChatType = 'Normal'
+currentChatType = 1
 
 function PERSISTENTCHAT_ON_INIT()
     if _G['ui'].ProcessReturnKey_OLD == nil then
@@ -8,15 +8,14 @@ function PERSISTENTCHAT_ON_INIT()
 end
 
 function ui.ProcessReturnKey_HOOKED()
-    chatTypes = {Shout = 1, Party = 2, Guild = 3, Normal = 4}
+    local frame = ui.GetFrame('chat')
+    local chattype_frame = ui.GetFrame('chattypelist')
+    local name = config.GetConfig('ChatTypeNumber')
 
-    local frame = ui.GetFrame('chat');
-    local titleCtrl = GET_CHILD(frame,'edit_to_bg');
-    local name  = GET_CHILD(titleCtrl,'title_to');
-
-    if currentChatType ~= name:GetText() and frame:IsVisible() == 0 and name:GetText():sub(1,2) ~= 'To' then
-        ui.SetChatType(chatTypes[currentChatType])
+    if currentChatType ~= name and frame:IsVisible() == 0 and currentChatType ~= 5 then
+        config.SetConfig('ChatTypeNumber',currentChatType)
+        ui.SetChatType(currentChatType-1)
     end
-    currentChatType = name:GetText()
+    currentChatType = name
     _G['ui'].ProcessReturnKey_OLD();
 end

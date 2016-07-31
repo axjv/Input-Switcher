@@ -21,6 +21,7 @@ local default = {
     sound            = true;
     soundtype        = 1;
     text             = true;
+    time             = {}
     }
 
 local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
@@ -32,8 +33,8 @@ cdTrackSkill          = {}
 cdTrackSkill['Slots'] = {}
 cdTrackSkill['icon']  = {}
 
-local cdTrackBuff = {}
-cdBuffList        = {'time','prevTime','slot','class','Slots'}
+cdTrackBuff = {}
+cdBuffList        = {'time','prevTime','slot','class','Slots','active'}
 for k,v in pairs(cdBuffList) do
     cdTrackBuff[v] = {}
 end
@@ -77,7 +78,7 @@ function CDTRACKER_ON_INIT(addon, frame)
         settings.firstTimeMessage = true
         CDTRACKER_SAVESETTINGS()
     end
-    local convertList = {settings.ignoreList, settings.chatList, settings.message}
+    local convertList = {settings.ignoreList, settings.chatList, settings.message, settings.time}
     for k,v in pairs(convertList) do
         for i,j in pairs(v) do
             if string.sub(i,1,1) ~= '[' then
@@ -187,7 +188,8 @@ helpBoxTable = {
     helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}"..
         "/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}"..
         "/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}"..
-        "/cd chat <ID> <message>{#000000} toggles yellowtext (!!) broadcasting for specific skills. Message is optional custom message when casting.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
+        "/cd chat <ID> <message>{#000000} toggles yellowtext (!!) broadcasting for specific skills. Message is optional custom message when casting.{nl} {nl}{#03134d}"..
+        "/cd time <ID> <time> {#000000} sets individual skill timers.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
     helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}"..
         "/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}"..
         "/cd help <command>{#000000} will show a short explanation about a command.{nl} {nl}{#03134d}"..
@@ -215,6 +217,7 @@ local CD_HELP_TABLE = {
     skin       = function() CHAT_SYSTEM('Usage: /cd skin <number> will change the skin of the cooldown tracker.{nl}Default: '..default.skin) end;
     sound      = function() CHAT_SYSTEM('Usage: /cd sound will toggle sound alerts on and off. /cd sound <number> will change the sound played.{nl}Default: '.. default.soundtype) end;
     text       = function() CHAT_SYSTEM('Usage: /cd text will toggle text alerts on and off.{nl}Default: '..default.text) end;
+    time       = function() CHAT_SYSTEM('Usage: /cd time <ID> <time> allows you to set timers for individual skills.{nl}Default: '..default.checkVal) end;
 }
 
 local CD_SETTINGS_TABLE = {
@@ -260,6 +263,15 @@ local CD_SETTINGS_TABLE = {
                 end
                 settings.chatList[skillList[ID]]       = true
                 CHAT_SYSTEM('Chat for '..skillList[ID]..' set to on.') end;
+    time       = function(ID, customtime)
+                if customtime ~= nil and type(tonumber(customtime)) == 'number' then
+                    settings.time[skillList[ID]]       = tonumber(customtime)
+                    CHAT_SYSTEM('Time for '..skillList[ID]..' set to '..customtime..'.')
+                else
+                    CHAT_SYSTEM('Invalid time value.')
+                end
+                return;
+                end;
     skillX     = function(num) settings.skillPosX = num CHAT_SYSTEM('Skill X set to '..num..'.') end;
     skillY     = function(num) settings.skillPosY = num CHAT_SYSTEM('Skill Y set to '..num..'.') end;
     buffX      = function(num) settings.buffPosX = num CHAT_SYSTEM('Buff X set to '..num..'.') end;
@@ -268,7 +280,11 @@ local CD_SETTINGS_TABLE = {
     skin       = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
     list       = function() GET_SKILL_LIST() local skillStr = 'Skills:{nl}'
                 for k,v in ipairs(skillList) do
-                    skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(not settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..'{nl}'
+                    local time = settings.checkVal
+                    if settings.time[v] ~= nil then
+                        time = settings.time[v]
+                    end
+                    skillStr = skillStr..'ID '..k..': '..v..' - alert '..BOOL_TO_WORD(not settings.ignoreList[v])..' - chat '..BOOL_TO_WORD(settings.chatList[v])..' - time '..time..'{nl}'
                 end
                 GET_BUFF_LIST()
                 if #buffList > 0 then
@@ -411,9 +427,9 @@ function ICON_USE_HOOKED(object, reAction)
         end
         if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
             if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
-                ui.Chat('!!'..settings.message['[Skill] '..cdTrackSkill[index]['fullName']])
+                ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
             else
-                ui.Chat('!!Casting '..cdTrackSkill[index]['fullName']..'!')
+                ui.Chat('!!Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
             end
             msgDisplay  = true
             castMessage = true
@@ -441,11 +457,15 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         cdTrackSkill[index]['prevTime'] = cdTrackSkill[index]['curTimeSecs']
         return cdTrackSkill[index]['curTime'], cdTrackSkill[index]['totalTime'];
     end
-    if settings.checkVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
+    local skillCheckVal = settings.checkVal
+    if settings.time['[Skill] '..cdTrackSkill[index]['fullName']] ~= nil then
+        skillCheckVal = tonumber(settings.time['[Skill] '..cdTrackSkill[index]['fullName']])
+    end
+    if skillCheckVal >= cdTrackSkill[index]['curTimeSecs'] and cdTrackSkill[index]['prevTime'] ~= cdTrackSkill[index]['curTimeSecs'] then
         -- skill ready
         if cdTrackSkill[index]['curTimeSecs'] == 0 then
             if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-                ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready!')
+                ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready!'))
                 msgDisplay = true
                 timer = imcTime.GetAppTime()
             end
@@ -472,7 +492,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         end
         -- show skill on cd
         if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-            ui.Chat('!!'..cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
+            ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.'))
             msgDisplay = true
             timer = imcTime.GetAppTime()
         end
@@ -502,6 +522,14 @@ end
 -- begin buff section
 -- retrieve all buff info
 function CDTRACK_BUFF_CHECK()
+    local buffID = {}
+
+    local cdPrevActive = {}
+    for k,v in pairs(cdTrackBuff['active']) do
+        cdPrevActive[k] = v
+        cdTrackBuff['active'][k] = 0
+    end
+
     local buff_ui = _G['s_buff_ui']
     local handle  = session.GetMyHandle();
     for j = 0 , buff_ui["buff_group_cnt"] do
@@ -517,39 +545,56 @@ function CDTRACK_BUFF_CHECK()
                 if buff ~= nil then
                     cdTrackBuff['time'][cls.Name]  = math.ceil(buff.time/1000)
                     cdTrackBuff['class'][cls.Name] = cls
-                    if settings.ignoreList['[Buff] '..dictionary.ReplaceDicIDInCompStr(cls.Name)] ~= true then
-                        CDTRACK_BUFF_DISPLAY(cls.Name,buff.buffID)
-                    end
+                    cdTrackBuff['active'][cls.Name] = 1
+                    buffID[cls.Name] = buff.buffID
                 end
             end
+        end
+        -- for k,v in pairs(cdTrackBuff['active']) do
+        --     if cdPrevActive[k] == 0 and v == 0 then
+        --     elseif cdPrevActive[k] == 1 and v == 0 then
+
+
+
+    end
+    for k,v in pairs(cdTrackBuff['active']) do 
+        if settings.ignoreList['[Buff] '..dictionary.ReplaceDicIDInCompStr(k)] ~= true then
+            CDTRACK_BUFF_DISPLAY(k,buffID[k],cdPrevActive[k])
         end
     end
 end
 -- prepare buff data for display
-function CDTRACK_BUFF_DISPLAY(name,ID)
+function CDTRACK_BUFF_DISPLAY(name,ID,prevActive)
     local bufftype = ''
     if cdTrackBuff['class'][name].Group1 == 'Debuff' then
         bufftype = 'DEBUFF'
     else
         bufftype = 'BUFF'
     end
-    if cdTrackBuff['prevTime'][name] ~= cdTrackBuff['time'][name] then
+    if cdTrackBuff['active'][name] == 1 then
         cdTrackBuff['slot'][name] = FIND_NEXT_SLOT(name, 'BUFF')
-        if cdTrackBuff['time'][name] == 0 and cdTrackBuff['prevTime'][name] == 1 then
-            if settings.sound == true then
-                imcSound.PlaySoundEvent("sys_jam_slot_equip");
-            end
-            DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
-            cdTrackBuff['prevTime'][name] = 0
-            return;
+    end
+
+    if cdTrackBuff['active'][name] == 0 and prevActive == 1 then
+        if settings.sound == true then
+            imcSound.PlaySoundEvent("sys_jam_slot_equip");
         end
-        DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2)
+        DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],0.1,ID)
+        cdTrackBuff['prevTime'][name] = 0
+        return;
+    end
+
+    if cdTrackBuff['prevTime'][name] ~= cdTrackBuff['time'][name] then
+        DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2,ID)
     end
     cdTrackBuff['prevTime'][name] = cdTrackBuff['time'][name]
+    if cdTrackBuff['active'][name] == 1 then
+        DISPLAY_SLOT(name, cdTrackBuff['slot'][name],name,cdTrackBuff['time'][name], bufftype, cdTrackBuff['class'][name],2,ID)
+    end
     return;
 end
 -- draw frame to screen
-function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
+function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration, buffArg)
     if kbSelectMode == 1 then
         return;
     end
@@ -588,6 +633,14 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
         cdFrame:SetEventScript(ui.LBUTTONDOWN, "CD_DRAG_START");
         cdFrame:SetEventScript(ui.LBUTTONUP, "CD_DRAG_STOP('"..cdtype.."',"..slot..")");
     end
+    -- if cdtype == 'BUFF' then
+    --     iconFrame:EnableHitTest(1)
+    --     iconFrame:EnableDrop(0);
+    --     iconFrame:EnableDrag(0);
+    --     iconFrame:SetEventScript(ui.RBUTTONUP, 'packet.ReqRemoveBuff(buffArg)');
+    -- else
+    --     iconFrame:EnableHitTest(0)
+    -- end
     iconFrame:EnableHitTest(0)
     -- position elements
     skillFrame['cooldown_'..cdtype][slot]:SetOffset(math.ceil(15*settings.size),0)
@@ -678,7 +731,7 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
     end
     if cdtype == 'BUFF' or cdtype == 'DEBUFF' then
         if cooldown == 0 then
-            iconFrame:SetDuration(2)
+            iconFrame:SetDuration(0.1)
         elseif cooldown < 3 then
             iconFrame:SetDuration(0.25)
         elseif cooldown < 5 then
@@ -689,6 +742,7 @@ function DISPLAY_SLOT(index, slot, name, cooldown, cdtype, obj, duration)
             iconFrame:SetDuration(2)
         end
     end
+
 end
 -- sort and list skills for settings
 function GET_SKILL_LIST()
@@ -737,5 +791,20 @@ function CLEANUP_SLOTS()
                 end
             end
         end
+    end
+end
+
+function SANITIZE_CHAT_OUTPUT(words)
+    badword = IsBadString(words)
+    if badword ~= nil then
+        if badword:find(' ') ~= nil then
+            badword_sanitized = badword:gsub(' ',' ')
+            words = words:gsub(badword,badword_sanitized)
+        else
+            words = words:gsub(badword, badword:sub(1,1)..'@dicID_^*$BADWORDS_20150317_000001$*^'..badword:sub(2))
+        end
+        return SANITIZE_CHAT_OUTPUT(words)
+    else
+        return words
     end
 end
