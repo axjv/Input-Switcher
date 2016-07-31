@@ -1,4 +1,5 @@
 local acutil = require('acutil');
+local effectFrame = nil
 function SFXTOGGLE_ON_INIT(addon, frame)
 	frame:ShowWindow(1);
 	acutil.slashCommand('/effect',SFX_TOGGLE);
@@ -19,6 +20,16 @@ local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off'}
 local fpsThresh = {5,10,20}
 
 function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
+    effectFrame = ui.GetFrame('EFFECTS_FRAME')
+    if effectFrame == nil then
+        effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
+        effectFrame:ShowWindow(1)
+        effectFrame:SetBorder(5, 0, 0, 0)
+        effectText = effectFrame:CreateOrGetControl('richtext','effecttext',0,0,0,0)
+        effectText = tolua.cast(effectText,'ui::CRichText')
+        effectText:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+        effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+    end
     if effectToggle == 1 then
         local fpsnumber = tonumber(argStr)
         if fpsnumber < fpsThresh[1] then
@@ -58,7 +69,9 @@ function SET_EFFECT_MODE(effectSwitch)
         graphic.SetDrawActor(100)
         graphic.SetDrawMonster(100)
     end
-    effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+    if effectFrame ~= nil then
+        effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+    end
     imcperfOnOff.EnableDeadParts(effectSwitch);
     
     graphic.EnableBlur(0);
