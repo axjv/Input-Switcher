@@ -3,6 +3,11 @@ Addons for Tree of Savior.
 
 
 ## Addons
+#### regentimer
+
+Infinite SP with the power of sitting.
+
+* /regenlock - toggles frame lock
 
 #### sfxtoggle
 
