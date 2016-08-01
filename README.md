@@ -14,6 +14,9 @@ Infinite SP with the power of sitting.
 Less lagging, more savior-ing.
 
 * /effect - toggles automatic graphics settings on/off
+* /effect thresh <off> <low> <full> - sets fps threshold for effects off, low and full
+* /effect players <num> - sets number of players to draw on low/no effects
+* /effect mobs <num> - sets number of mobs to draw on low/no effects
 
 #### chatfx
 
