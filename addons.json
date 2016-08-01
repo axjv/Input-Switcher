@@ -75,9 +75,9 @@
 		"file" : "sfxtoggle",
 		"extension" : "ipf",
 		"fileVersion" : "v0.0.5",
-		"releaseTag" : "mango",
+		"releaseTag" : "nectarine",
 		"unicode" : "⛄",
-		"description" : "Automatically change graphics settings based on fps. /effect to toggle",
+		"description" : "Automatically change graphics settings based on fps. /effect to toggle, /effect help for more commands.",
 		"tags" : [
 			"graphics",
 			"effects",
