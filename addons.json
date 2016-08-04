@@ -60,8 +60,8 @@
 		"name" : "Regen Timer",
 		"file" : "regentimer",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.3",
-		"releaseTag" : "mango",
+		"fileVersion" : "v0.0.4",
+		"releaseTag" : "orange",
 		"unicode" : "⛄",
 		"description" : "Keep track of regeneration and when you can sit to regen. /regenlock to toggle dragging",
 		"tags" : [
