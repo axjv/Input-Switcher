@@ -11,13 +11,11 @@ function SFXTOGGLE_ON_INIT(addon, frame)
 	acutil.slashCommand('/effect',SFX_CHAT_CMD);
     addon:RegisterMsg('FPS_UPDATE', 'FPS_SFXTOGGLE');
     effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
-    effectFrame:ShowWindow(1)
     effectFrame:SetBorder(5, 0, 0, 0)
     effectText = effectFrame:CreateOrGetControl('richtext','effecttext',0,0,0,0)
     effectText = tolua.cast(effectText,'ui::CRichText')
     effectText:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
     effectText:SetText('{@st41}{s18}Effects: {#00cc00}on')
-    effectText:ShowWindow(1)
     SFXTOGGLE_LOADSETTINGS()
 end
 local default = {thresh = {5,10,20}, enable = 1, players = 15, mobs = 20}
@@ -48,12 +46,16 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
     effectFrame = ui.GetFrame('EFFECTS_FRAME')
     if effectFrame == nil then
         effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
-        effectFrame:ShowWindow(1)
         effectFrame:SetBorder(5, 0, 0, 0)
         effectText = effectFrame:CreateOrGetControl('richtext','effecttext',0,0,0,0)
         effectText = tolua.cast(effectText,'ui::CRichText')
         effectText:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
         effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+    end
+    if settings.enable == 1 then
+        effectFrame:ShowWindow(1)
+    else
+        effectFrame:ShowWindow(0)
     end
     if settings.enable == 1 and timeElapsed > 3 then
         timeElapsed = 0
@@ -165,4 +167,5 @@ function SFX_TOGGLE()
         CHAT_SYSTEM('Effect automation on.')
         effectText:ShowWindow(1)
     end
+    return SFXTOGGLE_SAVESETTINGS()
 end
