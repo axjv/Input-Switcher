@@ -159,13 +159,12 @@ end
 function SFX_TOGGLE()
     if settings.enable == 0 then
         CHAT_SYSTEM('Effect automation off.')
-        effectText:ShowWindow(0)
         imcperfOnOff.EnableIMCEffect(1);
         imcperfOnOff.EnableEffect(1);
         SET_EFFECT_MODE(1)
     else
         CHAT_SYSTEM('Effect automation on.')
-        effectText:ShowWindow(1)
     end
+    FPS_SFXTOGGLE()
     return SFXTOGGLE_SAVESETTINGS()
 end
