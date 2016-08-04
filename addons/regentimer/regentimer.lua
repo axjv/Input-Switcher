@@ -18,6 +18,7 @@ function REGENTIMER_ON_INIT(addon, frame)
 end
 
 function CHECK_REGEN_FRAME_EXIST()
+    regenframe = ui.GetFrame('REGEN_TIMER_FRAME')
     if regenframe == nil then
         REGEN_TIMER_CREATE_FRAME()
     end
@@ -29,6 +30,7 @@ function REGEN_TIMER_CREATE_FRAME()
     regenframe:SetPos(settings.pos.x,settings.pos.y)
     regenframe:EnableHitTest(settings.lock)
     regenframe:SetBorder(5, 0, 0, 0)
+    regenframe:ShowWindow(1)
     regentime = regenframe:CreateOrGetControl('richtext','regentimetext',0,0,0,0)
     regentime = tolua.cast(regentime,'ui::CRichText')
     regentime:SetGravity(ui.CENTER_HORZ,ui.BOTTOM)

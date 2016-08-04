@@ -165,6 +165,5 @@ function SFX_TOGGLE()
     else
         CHAT_SYSTEM('Effect automation on.')
     end
-    FPS_SFXTOGGLE()
     return SFXTOGGLE_SAVESETTINGS()
 end
