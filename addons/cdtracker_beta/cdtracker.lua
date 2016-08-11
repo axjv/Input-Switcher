@@ -270,7 +270,7 @@ local CD_SETTINGS_TABLE = {
                 settings.chatList[skillList[ID]]       = true
                 CHAT_SYSTEM('Chat for '..skillList[ID]..' set to on.') end;
 
-    chattype   = function(num) if num == 1 or num == 2 then settings.chattype = num CHAT_SYSTEM('Chat type set to '..num..'.') else CHAT_SYSTEM('Invalid chat type.') end ui.Chat('!!') end;
+    chattype   = function(num) local ctype = {'all', 'party'} if num == 1 or num == 2 then settings.chattype = num CHAT_SYSTEM('Chat type set to '..ctype[num]..'.') else CHAT_SYSTEM('Invalid chat type.') end ui.Chat('!!') end;
 
     time       = function(ID, customtime)
                 if customtime ~= nil and type(tonumber(customtime)) == 'number' then
@@ -434,7 +434,7 @@ function ICON_USE_HOOKED(object, reAction)
             end
             ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
         end
-        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
+        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 and TIME_ELAPSED(0.5) then
             if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
                 ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
             else
@@ -979,9 +979,8 @@ function CDTRACKER_CREATE_FRAME()
 
     for k,v in pairs(frameSkins) do 
         cdTrackerUIObjects['skindroplist']:AddItem(k,v,0,"ui.Chat('/cd skin "..k.."')")
-            print("ui.Chat('/cd skin "..k..")")
     end
-    cdTrackerUIObjects['skindroplist']:SelectItem(settings.skin)
+    cdTrackerUIObjects['skindroplist']:SelectItem(settings.skin-1)
 
     cdTrackerUIObjects['soundtype'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_SOUNDTYPE', 35,345,200,30)
     cdTrackerUIObjects['soundtype'] = tolua.cast(cdTrackerUIObjects['soundtype'],'ui::CRichText')
@@ -994,10 +993,9 @@ function CDTRACKER_CREATE_FRAME()
     cdTrackerUIObjects['soundtypedroplist']:SetSkinName('droplist_normal')
 
     for k,v in pairs(soundTypes) do 
-        cdTrackerUIObjects['soundtypedroplist']:AddItem(k,v,0,"ui.Chat('/cd soundtype "..k.."')")
-            print("ui.Chat('/cd soundtype "..k..")")
+        cdTrackerUIObjects['soundtypedroplist']:AddItem(k,v,0,"ui.Chat('/cd sound "..k.."')")
     end
-    cdTrackerUIObjects['soundtypedroplist']:SelectItem(settings.soundtype)
+    cdTrackerUIObjects['soundtypedroplist']:SelectItem(settings.soundtype-1)
 
     cdTrackerUIObjects['chattype'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_CHATTYPE', 270,230,200,30)
     cdTrackerUIObjects['chattype'] = tolua.cast(cdTrackerUIObjects['chattype'],'ui::CButton')
@@ -1333,6 +1331,16 @@ end
 
 function CD_SEND_CHAT_MESSAGE(id)
     message = cdTrackerUIObjects['skillmessageinput'..id]:GetText()
+    local skills = RETURN_SKILL_LIST()
+    if message == '' then
+        settings.message[skillList[id]] = nil
+        CDTRACKER_SAVESETTINGS()
+        CDTRACKER_LOADSETTINGS()
+        cdTrackerUIObjects['skillmessage'..id]:SetText('{@st46b}{s12}{#ffffff}Set Message{/}')
+        ui.DestroyFrame('CDTRACKER_INPUT')
+        CD_LIST()
+        return;
+    end
     ui.Chat('/cd chat '..id..' '..message)
 
     cdTrackerUIObjects['skillmessage'..id]:SetText('{@st46b}{s12}{#ffffff}'..message..'{/}')
