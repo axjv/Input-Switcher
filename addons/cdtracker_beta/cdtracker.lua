@@ -8,6 +8,7 @@ local default = {
     buffPosY         = 200;
     buffs            = true;
     chatList         = {};
+    chattype         = 1;
     checkVal         = 5;
     firstTimeMessage = false;
     ignoreList       = {};
@@ -27,6 +28,9 @@ local default = {
 local soundTypes = {'button_click_stats_up','quest_count','quest_event_start','quest_success_2','sys_alarm_mon_kill_count','quest_event_click','sys_secret_alarm', 'travel_diary_1','button_click_4'}
 
 local frameSkins = {'box_glass', 'slot_name', 'shadow_box', 'frame_bg', 'textview', 'chat_window', 'tooltip1'}
+
+local chatTypes = {'!!','/p '}
+
 -- store skill/buff
 local skillIndex      = 1
 cdTrackSkill          = {}
@@ -188,7 +192,8 @@ helpBoxTable = {
     helpBox_3 = function() ui.MsgBox("{s18}{#1908e3}Skill customization:{#000000}{nl} {nl}{#03134d}"..
         "/cd list{#000000} will list all skills alphabetically with their ID number.{nl} {nl}{#03134d}"..
         "/cd alert <ID>{#000000} toggles alerts for a specific skill.{nl} {nl}{#03134d}"..
-        "/cd chat <ID> <message>{#000000} toggles yellowtext (!!) broadcasting for specific skills. Message is optional custom message when casting.{nl} {nl}{#03134d}"..
+        "/cd chat <ID> <message>{#000000} toggles broadcasting for specific skills. Message is optional custom message when casting.{nl} {nl}{#03134d}"..
+        "/cd chattype <type>{#000000} changes chat channel for broadcasting. 1 = All, 2 = Party. (Default 1){nl} {nl}{#03134d}"..
         "/cd time <ID> <time> {#000000} sets individual skill timers.","helpBoxTable.helpBox_4()","helpBoxTable.helpBox_4()") end;
     helpBox_4 = function() ui.MsgBox("{s18}{#1908e3}System commands:{#000000}{nl} {nl}{#03134d}"..
         "/cd reset{#000000} will reset all settings to default.{nl} {nl}{#03134d}"..
@@ -203,6 +208,7 @@ local CD_HELP_TABLE = {
     buffX      = function() CHAT_SYSTEM('Usage: /cd buffX <coords> will set the x coordinates for the buff window.{nl}Default: '..default.buffPosX) end;
     buffY      = function() CHAT_SYSTEM('Usage: /cd buffY <coords> will set the y coordinates for the buff window.{nl}Default: '..default.buffPosY) end;
     chat       = function() CHAT_SYSTEM('Usage: /cd chat <ID> <message> will toggle chat alerts for a single skill. Message is optional message to send when casting.') end;
+    chattype   = function() CHAT_SYSTEM('Usage: /cd chattype <type> will set the chat type, type 1 = All, type 2 = Party.') end;
     help       = function() CHAT_SYSTEM('Usage: /cd help <command> will open what you\'re reading.') end;
     list       = function() CHAT_SYSTEM('Usage: /cd list will list all skills along with their ID.') end;
     lock       = function() CHAT_SYSTEM('Usage: /cd lock will lock all frames in place.{nl}Default: Off') end;
@@ -226,7 +232,7 @@ local CD_SETTINGS_TABLE = {
     sound      = function(num)
                 if type(num)                       == 'number' then
                     settings.soundtype             = num
-                    CHAT_SYSTEM('Soundtype set to '..num..'.')
+                    CHAT_SYSTEM('Soundtype set to '..soundTypes[num]..'.')
                     imcSound.PlaySoundEvent(soundTypes[settings.soundtype]);
                     return;
                 end
@@ -255,7 +261,7 @@ local CD_SETTINGS_TABLE = {
                 end
                 if settings.chatList[skillList[ID]]    ~= nil then
                     settings.chatList[skillList[ID]]   = not settings.chatList[skillList[ID]]
-                    if not settings.chatList[skillList[ID]] then
+                    if not settings.chatList[skillList[ID]] and settings.chattype == 1 then
                         ui.Chat('!!')
                     end
                     CHAT_SYSTEM('Chat for '..skillList[ID]..' set to '..BOOL_TO_WORD(settings.chatList[skillList[ID]])..'.')
@@ -263,6 +269,9 @@ local CD_SETTINGS_TABLE = {
                 end
                 settings.chatList[skillList[ID]]       = true
                 CHAT_SYSTEM('Chat for '..skillList[ID]..' set to on.') end;
+
+    chattype   = function(num) if num == 1 or num == 2 then settings.chattype = num CHAT_SYSTEM('Chat type set to '..num..'.') else CHAT_SYSTEM('Invalid chat type.') end ui.Chat('!!') end;
+
     time       = function(ID, customtime)
                 if customtime ~= nil and type(tonumber(customtime)) == 'number' then
                     settings.time[skillList[ID]]       = tonumber(customtime)
@@ -277,7 +286,7 @@ local CD_SETTINGS_TABLE = {
     buffX      = function(num) settings.buffPosX = num CHAT_SYSTEM('Buff X set to '..num..'.') end;
     buffY      = function(num) settings.buffPosY = num CHAT_SYSTEM('Buff Y set to '..num..'.') end;
     showframes = function() CDTRACKER_SHOW_FRAMES() end;
-    skin       = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..num..'.') end;
+    skin       = function(num) settings.skin = num CHAT_SYSTEM('Skin set to '..frameSkins[num]..'.') end;
     list       = function() GET_SKILL_LIST() local skillStr = 'Skills:{nl}'
                 for k,v in ipairs(skillList) do
                     local time = settings.checkVal
@@ -427,9 +436,9 @@ function ICON_USE_HOOKED(object, reAction)
         end
         if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
             if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
-                ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
+                ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
             else
-                ui.Chat('!!Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
+                ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
             end
             msgDisplay  = true
             castMessage = true
@@ -465,7 +474,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         -- skill ready
         if cdTrackSkill[index]['curTimeSecs'] == 0 then
             if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-                ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready!'))
+                ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready!'))
                 msgDisplay = true
                 timer = imcTime.GetAppTime()
             end
@@ -492,7 +501,7 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         end
         -- show skill on cd
         if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and checkChatFrame:IsVisible() == 0 and not castMessage then
-            ui.Chat('!!'..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.'))
+            ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.'))
             msgDisplay = true
             timer = imcTime.GetAppTime()
         end
@@ -807,4 +816,538 @@ function SANITIZE_CHAT_OUTPUT(words)
     else
         return words
     end
+end
+
+
+
+-- Begin UI
+
+
+
+acutil.slashCommand('/cdtracker',CDTRACKER_TOGGLE_FRAME)
+cdTrackerUI = nil
+cdTrackerSkillsUI = nil
+cdTrackerUIObjects = {}
+
+function CD_CLOSE_FRAMES()
+    cdTrackerUI = ui.GetFrame('CDTRACKER_UI')
+    cdTrackerSkillsUI = ui.GetFrame('CDTRACKER_SKILLS_UI')
+
+    if cdTrackerUI ~= nil then
+        cdTrackerUI:ShowWindow(0)
+    end
+    if cdTrackerSkillsUI ~= nil then
+        cdTrackerSkillsUI:ShowWindow(0)
+    end
+end
+
+function CDTRACKER_CREATE_FRAME()
+    CDTRACKER_LOADSETTINGS()
+    cdTrackerUI = ui.CreateNewFrame('cdtracker','CDTRACKER_UI')
+    cdTrackerUI:SetLayerLevel(100)
+    cdTrackerUI:SetSkinName(frameSkins[7])
+    cdTrackerUI:Resize(500,500)
+    cdTrackerUI:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+    cdTrackerUI:SetEventScript(ui.RBUTTONUP,'CD_CLOSE_FRAMES')
+
+    cdTrackerUIObjects['header'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_HEADER', 0,15,200,55)
+    cdTrackerUIObjects['header'] = tolua.cast(cdTrackerUIObjects['header'],'ui::CRichText')
+    cdTrackerUIObjects['header']:SetText('{@st66b}{s24}{#ffffff}Cooldown Tracker Settings{/}')
+    cdTrackerUIObjects['header']:SetSkinName("textview");
+    cdTrackerUIObjects['header']:EnableHitTest(0)
+    cdTrackerUIObjects['header']:SetGravity(ui.CENTER_HORZ,ui.TOP)
+
+    cdTrackerUIObjects['close'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_CLOSE', 460,10,30,30)
+    cdTrackerUIObjects['close'] = tolua.cast(cdTrackerUIObjects['close'],'ui::CButton')
+    cdTrackerUIObjects['close']:SetText('{@st66b}X{/}')
+    cdTrackerUIObjects['close']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['close']:SetOverSound("button_over");
+    cdTrackerUIObjects['close']:SetEventScript(ui.LBUTTONUP, "CD_CLOSE_FRAMES");
+    cdTrackerUIObjects['close']:SetSkinName("test_pvp_btn");
+
+    cdTrackerUIObjects['enabled'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_ENABLED', 30,55,200,30)
+    cdTrackerUIObjects['enabled'] = tolua.cast(cdTrackerUIObjects['enabled'],'ui::CButton')
+    if settings.alerts then enabled = '{#00cc00}on' else enabled = '{#cc0000}off' end
+    cdTrackerUIObjects['enabled']:SetText('{@st66b}{#ffffff}cdtracker: '..enabled..'{/}')
+    cdTrackerUIObjects['enabled']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['enabled']:SetOverSound("button_over");
+    cdTrackerUIObjects['enabled']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('enabled')");
+    cdTrackerUIObjects['enabled']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['skills'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_SKILLWINDOW', 30,90,200,30)
+    cdTrackerUIObjects['skills'] = tolua.cast(cdTrackerUIObjects['skills'],'ui::CButton')
+    if settings.skills then skills = '{#00cc00}on' else skills = '{#cc0000}off' end
+    cdTrackerUIObjects['skills']:SetText('{@st66b}{#ffffff}skills: '..skills..'{/}')
+
+    cdTrackerUIObjects['skills']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['skills']:SetOverSound("button_over");
+    cdTrackerUIObjects['skills']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('skills')");
+    cdTrackerUIObjects['skills']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['buffs'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_BUFFWINDOW', 30,125,200,30)
+    cdTrackerUIObjects['buffs'] = tolua.cast(cdTrackerUIObjects['buffs'],'ui::CButton')
+    if settings.buffs then buffs = '{#00cc00}on' else buffs = '{#cc0000}off' end
+    cdTrackerUIObjects['buffs']:SetText('{@st66b}{#ffffff}buffs: '..buffs..'{/}')
+    cdTrackerUIObjects['buffs']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['buffs']:SetOverSound("button_over");
+    cdTrackerUIObjects['buffs']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('buffs')");
+    cdTrackerUIObjects['buffs']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['text'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_TEXT', 30,160,200,30)
+    cdTrackerUIObjects['text'] = tolua.cast(cdTrackerUIObjects['text'],'ui::CButton')
+    if settings.text then text = '{#00cc00}on' else text = '{#cc0000}off' end
+    cdTrackerUIObjects['text']:SetText('{@st66b}{#ffffff}text: '..text..'{/}')
+    cdTrackerUIObjects['text']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['text']:SetOverSound("button_over");
+    cdTrackerUIObjects['text']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('text')");
+    cdTrackerUIObjects['text']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['sound'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_SOUND', 30,195,200,30)
+    cdTrackerUIObjects['sound'] = tolua.cast(cdTrackerUIObjects['sound'],'ui::CButton')
+    if settings.sound then sound = '{#00cc00}on' else sound = '{#cc0000}off' end
+    cdTrackerUIObjects['sound']:SetText('{@st66b}{#ffffff}sound: '..sound..'{/}')
+    cdTrackerUIObjects['sound']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['sound']:SetOverSound("button_over");
+    cdTrackerUIObjects['sound']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('sound')");
+    cdTrackerUIObjects['sound']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['lock'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_LOCK', 30,230,200,30)
+    cdTrackerUIObjects['lock'] = tolua.cast(cdTrackerUIObjects['lock'],'ui::CButton')
+    if settings.lock then lock = '{#00cc00}on' else lock = '{#cc0000}off' end
+    cdTrackerUIObjects['lock']:SetText('{@st66b}{#ffffff}lock: '..lock..'{/}')
+    cdTrackerUIObjects['lock']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['lock']:SetOverSound("button_over");
+    cdTrackerUIObjects['lock']:SetEventScript(ui.LBUTTONUP, "TOGGLE_CD('lock')");
+    cdTrackerUIObjects['lock']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['showframes'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_SHOWFRAMES', 30,265,200,30)
+    cdTrackerUIObjects['showframes'] = tolua.cast(cdTrackerUIObjects['showframes'],'ui::CButton')
+    cdTrackerUIObjects['showframes']:SetText('{@st66b}{#ffffff}show frames{/}')
+    cdTrackerUIObjects['showframes']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['showframes']:SetOverSound("button_over");
+    cdTrackerUIObjects['showframes']:SetEventScript(ui.LBUTTONUP, "ui.Chat('/cd showframes')");
+    cdTrackerUIObjects['showframes']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['time'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_TIME', 270,95,200,30)
+    cdTrackerUIObjects['time'] = tolua.cast(cdTrackerUIObjects['time'],'ui::CRichText')
+    cdTrackerUIObjects['time']:SetText('{@st66b}{#ffffff}time:{/}')
+    cdTrackerUIObjects['time']:SetSkinName("textview");
+    cdTrackerUIObjects['time']:EnableHitTest(0)
+
+    cdTrackerUIObjects['timebox'] = cdTrackerUI:CreateOrGetControl('edit','CDTRACKER_TIMEBOX', 320,90,50,30)
+    cdTrackerUIObjects['timebox'] = tolua.cast(cdTrackerUIObjects['timebox'],'ui::CEditControl')
+
+    cdTrackerUIObjects['timelabel'] = cdTrackerUIObjects['timebox']:CreateOrGetControl('richtext','CDTRACKER_TIMELABEL', 0,0,30,30)
+    cdTrackerUIObjects['timelabel'] = tolua.cast(cdTrackerUIObjects['timelabel'],'ui::CRichText')
+    cdTrackerUIObjects['timelabel']:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+    cdTrackerUIObjects['timelabel']:EnableHitTest(0)
+    cdTrackerUIObjects['timelabel']:SetText('{@st66b}{#ffffff}'..settings.checkVal)
+
+    cdTrackerUIObjects['timebox']:SetEventScript(ui.LBUTTONUP,"cdTrackerUIObjects['timelabel']:ShowWindow(0)")
+    cdTrackerUIObjects['timebox']:SetLostFocusingScp("cdTrackerUIObjects['timelabel']:ShowWindow(1)")
+    cdTrackerUIObjects['timebox']:SetEventScript(ui.ENTERKEY,"CD_SET_MAIN_TIME")
+
+    cdTrackerUIObjects['size'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_SIZE', 270,130,200,30)
+    cdTrackerUIObjects['size'] = tolua.cast(cdTrackerUIObjects['size'],'ui::CRichText')
+    cdTrackerUIObjects['size']:SetText('{@st66b}{#ffffff}size:{/}')
+    cdTrackerUIObjects['size']:SetSkinName("textview");
+    cdTrackerUIObjects['size']:EnableHitTest(0)
+
+    cdTrackerUIObjects['sizebox'] = cdTrackerUI:CreateOrGetControl('edit','CDTRACKER_SIZEBOX', 320,125,50,30)
+    cdTrackerUIObjects['sizebox'] = tolua.cast(cdTrackerUIObjects['sizebox'],'ui::CEditControl')
+    cdTrackerUIObjects['sizebox']:SetEventScript(ui.ENTERKEY,"CD_SET_SIZE")
+
+    cdTrackerUIObjects['sizelabel'] = cdTrackerUIObjects['sizebox']:CreateOrGetControl('richtext','CDTRACKER_SIZELABEL', 0,0,30,30)
+    cdTrackerUIObjects['sizelabel'] = tolua.cast(cdTrackerUIObjects['sizelabel'],'ui::CRichText')
+    cdTrackerUIObjects['sizelabel']:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+    cdTrackerUIObjects['sizelabel']:EnableHitTest(0)
+    cdTrackerUIObjects['sizelabel']:SetText('{@st66b}{#ffffff}'..settings.size)
+
+    cdTrackerUIObjects['sizebox']:SetEventScript(ui.LBUTTONUP,"cdTrackerUIObjects['sizelabel']:ShowWindow(0)")
+    cdTrackerUIObjects['sizebox']:SetLostFocusingScp("cdTrackerUIObjects['sizelabel']:ShowWindow(1)")
+    cdTrackerUIObjects['sizebox']:SetEventScript(ui.ENTERKEY,"CD_SET_SIZE")
+
+    cdTrackerUIObjects['skin'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_SKIN',35,310,200,30)
+    cdTrackerUIObjects['skin'] = tolua.cast(cdTrackerUIObjects['skin'],'ui::CRichText')
+    cdTrackerUIObjects['skin']:SetText('{@st66b}{#ffffff}skin:{/}')
+    cdTrackerUIObjects['skin']:SetSkinName("textview");
+    cdTrackerUIObjects['skin']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skindroplist'] = cdTrackerUI:CreateOrGetControl('droplist','CDTRACKER_SKINDROPLIST', 100,310,375,20)
+    cdTrackerUIObjects['skindroplist'] = tolua.cast(cdTrackerUIObjects['skindroplist'],'ui::CDropList')
+    cdTrackerUIObjects['skindroplist']:SetSkinName('droplist_normal')
+
+    for k,v in pairs(frameSkins) do 
+        cdTrackerUIObjects['skindroplist']:AddItem(k,v,0,"ui.Chat('/cd skin "..k.."')")
+            print("ui.Chat('/cd skin "..k..")")
+    end
+    cdTrackerUIObjects['skindroplist']:SelectItem(settings.skin)
+
+    cdTrackerUIObjects['soundtype'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_SOUNDTYPE', 35,345,200,30)
+    cdTrackerUIObjects['soundtype'] = tolua.cast(cdTrackerUIObjects['soundtype'],'ui::CRichText')
+    cdTrackerUIObjects['soundtype']:SetText('{@st66b}{#ffffff}sound:{/}')
+    cdTrackerUIObjects['soundtype']:SetSkinName("textview");
+    cdTrackerUIObjects['soundtype']:EnableHitTest(0)
+
+    cdTrackerUIObjects['soundtypedroplist'] = cdTrackerUI:CreateOrGetControl('droplist','CDTRACKER_SOUNDTYPEDROPLIST', 100,345,375,20)
+    cdTrackerUIObjects['soundtypedroplist'] = tolua.cast(cdTrackerUIObjects['soundtypedroplist'],'ui::CDropList')
+    cdTrackerUIObjects['soundtypedroplist']:SetSkinName('droplist_normal')
+
+    for k,v in pairs(soundTypes) do 
+        cdTrackerUIObjects['soundtypedroplist']:AddItem(k,v,0,"ui.Chat('/cd soundtype "..k.."')")
+            print("ui.Chat('/cd soundtype "..k..")")
+    end
+    cdTrackerUIObjects['soundtypedroplist']:SelectItem(settings.soundtype)
+
+    cdTrackerUIObjects['chattype'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_CHATTYPE', 270,230,200,30)
+    cdTrackerUIObjects['chattype'] = tolua.cast(cdTrackerUIObjects['chattype'],'ui::CButton')
+    if settings.chattype == 1 then chattype = 'all' else chattype = 'party' end
+    cdTrackerUIObjects['chattype']:SetText('{@st66b}{#ffffff}chat type: '..chattype..'{/}')
+    cdTrackerUIObjects['chattype']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['chattype']:SetOverSound("button_over");
+    cdTrackerUIObjects['chattype']:SetEventScript(ui.LBUTTONUP, "CD_CHANGE_CHAT_TYPE");
+    cdTrackerUIObjects['chattype']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['autochatswap'] = cdTrackerUI:CreateOrGetControl('richtext','CDTRACKER_AUTOCHATSWAP', 270,270,200,30)
+    cdTrackerUIObjects['autochatswap'] = tolua.cast(cdTrackerUIObjects['autochatswap'],'ui::CRichText')
+    cdTrackerUIObjects['autochatswap']:SetText('{@st66b}{#ffffff}PvP auto party chat:{/}')
+    cdTrackerUIObjects['autochatswap']:SetSkinName("textview");
+    cdTrackerUIObjects['autochatswap']:EnableHitTest(0)
+
+    cdTrackerUIObjects['autochatswapbox'] = cdTrackerUI:CreateOrGetControl('checkbox','CDTRACKER_BUTTON_AUTOCHATSWAPBOX',420,270,20,20)
+    cdTrackerUIObjects['autochatswapbox'] = tolua.cast(cdTrackerUIObjects['autochatswapbox'],'ui::CCheckBox')
+    cdTrackerUIObjects['autochatswapbox']:Resize(20,20)
+
+    cdTrackerUIObjects['skillslist'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_SKILLSLIST', 270,55,200,30)
+    cdTrackerUIObjects['skillslist'] = tolua.cast(cdTrackerUIObjects['skillslist'],'ui::CButton')
+    cdTrackerUIObjects['skillslist']:SetText('{@st66b}{#ffffff}individual skill settings{/}')
+    cdTrackerUIObjects['skillslist']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['skillslist']:SetOverSound("button_over");
+    cdTrackerUIObjects['skillslist']:SetEventScript(ui.LBUTTONUP, "CD_LIST");
+    cdTrackerUIObjects['skillslist']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['reset'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_RESET', 270,450,200,30)
+    cdTrackerUIObjects['reset'] = tolua.cast(cdTrackerUIObjects['reset'],'ui::CButton')
+    cdTrackerUIObjects['reset']:SetText('{@st66b}{#ff0000}reset all settings{/}')
+    cdTrackerUIObjects['reset']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['reset']:SetOverSound("button_over");
+    cdTrackerUIObjects['reset']:SetEventScript(ui.LBUTTONUP, "CD_RESET_ALL_SETTINGS");
+    cdTrackerUIObjects['reset']:SetSkinName("quest_box");
+
+    cdTrackerUIObjects['helpbox'] = cdTrackerUI:CreateOrGetControl('button','CDTRACKER_BUTTON_HELPBOX', 30,450,200,30)
+    cdTrackerUIObjects['helpbox'] = tolua.cast(cdTrackerUIObjects['helpbox'],'ui::CButton')
+    cdTrackerUIObjects['helpbox']:SetText('{@st66b}{#ffff00}chat command help{/}')
+    cdTrackerUIObjects['helpbox']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['helpbox']:SetOverSound("button_over");
+    cdTrackerUIObjects['helpbox']:SetEventScript(ui.LBUTTONUP, "ui.Chat('/cd help all')");
+    cdTrackerUIObjects['helpbox']:SetSkinName("quest_box");
+
+end
+
+function CD_RESET_ALL_SETTINGS()
+    ui.MsgBox("{s24}{#ff0000}WARNING!{#000000}{nl} {nl}{#03134d}"..
+        "{s18}Are you sure you want to reset all settings? This cannot be undone.","ui.Chat('/cd reset')","Nope")
+end
+
+function RETURN_SKILL_LIST()
+    skillList = {}
+    for k,v in pairs(cdTrackSkill) do
+        if type(tonumber(k)) == 'number' then
+            skillList[k] = '[Skill] '..cdTrackSkill[k]['fullName']
+        end
+    end
+    table.sort(skillList)
+    return skillList
+end
+
+function RETURN_BUFF_LIST()
+    buffList = {}
+    for k,v in pairs(cdTrackBuff['class']) do
+        local buffname = dictionary.ReplaceDicIDInCompStr(k)
+        table.insert(buffList, '[Buff] '..buffname)
+    end
+    table.sort(buffList)
+    return buffList
+end
+
+function CD_MAINMENU()
+    CD_CLOSE_FRAMES()
+    CDTRACKER_TOGGLE_FRAME()
+    if cdTrackerSkillsUI ~= nil then
+        cdTrackerUI:SetPos(cdTrackerSkillsUI:GetX(),cdTrackerSkillsUI:GetY())
+    end
+end
+
+function CD_LIST()
+    CD_CLOSE_FRAMES()
+    GET_SKILL_LIST()
+    GET_BUFF_LIST()
+    CDTRACKER_LOADSETTINGS()
+    cdTrackerSkillsUI = ui.CreateNewFrame('cdtracker','CDTRACKER_SKILLS_UI')
+    cdTrackerSkillsUI:SetLayerLevel(100)
+    -- cdTrackerSkillsUI:EnableHitTest(0)
+    cdTrackerSkillsUI:SetSkinName(frameSkins[7])
+    cdTrackerSkillsUI:Resize(800,510)
+    if cdTrackerUI~=nil then
+        cdTrackerSkillsUI:SetPos(cdTrackerUI:GetX(),cdTrackerUI:GetY())
+    end
+    cdTrackerSkillsUI:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+    cdTrackerSkillsUI:SetEventScript(ui.RBUTTONUP,'CD_MAINMENU')
+    cdTrackerSkillsUI:ShowWindow(1)
+
+    cdTrackerUIObjects['close'] = cdTrackerSkillsUI:CreateOrGetControl('button','CDTRACKER_BUTTON_CLOSE', 760,10,30,30)
+    cdTrackerUIObjects['close'] = tolua.cast(cdTrackerUIObjects['close'],'ui::CButton')
+    cdTrackerUIObjects['close']:SetText('{@st66b}X{/}')
+    cdTrackerUIObjects['close']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['close']:SetOverSound("button_over");
+    cdTrackerUIObjects['close']:SetEventScript(ui.LBUTTONUP, "CD_CLOSE_FRAMES");
+    cdTrackerUIObjects['close']:SetSkinName("test_pvp_btn");
+
+    skillList = RETURN_SKILL_LIST()
+    buffList = RETURN_BUFF_LIST()
+    dots = '.........................................................................................................................................................................................'
+
+    cdGroupBox = cdTrackerSkillsUI:CreateOrGetControl('groupbox','CDTRACKER_GROUPBOX',10,50,780,420)
+    cdGroupBox = tolua.cast(cdGroupBox,'ui::CGroupBox')
+    cdGroupBox:SetSkinName("textview")
+    cdGroupBox:EnableHittestGroupBox(false)
+    cdGroupBox:RemoveAllChild()
+
+    cdTrackerUIObjects['skillname'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLNAME', 20,20,200,30)
+    cdTrackerUIObjects['skillname'] = tolua.cast(cdTrackerUIObjects['skillname'],'ui::CRichText')
+    cdTrackerUIObjects['skillname']:SetText('{@st66b}{#ffffff}Name{/}')
+    cdTrackerUIObjects['skillname']:SetSkinName("textview");
+    cdTrackerUIObjects['skillname']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skillalert'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLALERT', 300,20,200,30)
+    cdTrackerUIObjects['skillalert'] = tolua.cast(cdTrackerUIObjects['skillalert'],'ui::CRichText')
+    cdTrackerUIObjects['skillalert']:SetText('{@st66b}{#ffffff}Alerts{/}')
+    cdTrackerUIObjects['skillalert']:SetSkinName("textview");
+    cdTrackerUIObjects['skillalert']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skillchat'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLCHAT', 400,20,200,30)
+    cdTrackerUIObjects['skillchat'] = tolua.cast(cdTrackerUIObjects['skillchat'],'ui::CRichText')
+    cdTrackerUIObjects['skillchat']:SetText('{@st66b}{#ffffff}Chat{/}')
+    cdTrackerUIObjects['skillchat']:SetSkinName("textview");
+    cdTrackerUIObjects['skillchat']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skillmessage'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLMESSAGE', 525,20,200,30)
+    cdTrackerUIObjects['skillmessage'] = tolua.cast(cdTrackerUIObjects['skillmessage'],'ui::CRichText')
+    cdTrackerUIObjects['skillmessage']:SetText('{@st66b}{#ffffff}Message{/}')
+    cdTrackerUIObjects['skillmessage']:SetSkinName("textview");
+    cdTrackerUIObjects['skillmessage']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skilltime'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLTIME', 685,20,200,30)
+    cdTrackerUIObjects['skilltime'] = tolua.cast(cdTrackerUIObjects['skilltime'],'ui::CRichText')
+    cdTrackerUIObjects['skilltime']:SetText('{@st66b}{#ffffff}Time{/}')
+    cdTrackerUIObjects['skilltime']:SetSkinName("textview");
+    cdTrackerUIObjects['skilltime']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skillhelp'] = cdTrackerSkillsUI:CreateOrGetControl('richtext','CDTRACKER_SKILLHELP',20,475,200,30)
+    cdTrackerUIObjects['skillhelp'] = tolua.cast(cdTrackerUIObjects['skillhelp'],'ui::CRichText')
+    cdTrackerUIObjects['skillhelp']:SetText('{@st66b}{#ffffff}Right-click to return to the main menu.{/}')
+    cdTrackerUIObjects['skillhelp']:SetSkinName("textview");
+    cdTrackerUIObjects['skillhelp']:EnableHitTest(0)
+
+    offset = 0
+    for k, v in ipairs(skillList) do
+
+        skillname = v:gsub('%[Skill%]','')
+
+        cdTrackerUIObjects['skill'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_SKILL_'..k,10,10+offset,100,100)
+        cdTrackerUIObjects['skill'..k] = tolua.cast(cdTrackerUIObjects['skill'..k],'ui::CRichText')
+        cdTrackerUIObjects['skill'..k]:SetText('{@st66b}{#ffff55}[Skill]{#ffffff}'..skillname..'{/}')
+        cdTrackerUIObjects['skill'..k]:EnableHitTest(0)
+
+        cdTrackerUIObjects['skillalert'..k] = cdGroupBox:CreateOrGetControl('checkbox','CDTRACKER_BUTTON_SKILLALERT_'..k,300,10+offset,100,100)
+        cdTrackerUIObjects['skillalert'..k] = tolua.cast(cdTrackerUIObjects['skillalert'..k],'ui::CCheckBox')
+        cdTrackerUIObjects['skillalert'..k]:Resize(20,20)
+        if settings.ignoreList[v] == true then
+            cdTrackerUIObjects['skillalert'..k]:SetCheck(0)
+        else
+            cdTrackerUIObjects['skillalert'..k]:SetCheck(1)
+        end
+        cdTrackerUIObjects['skillalert'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd alert "..k.."') CDTRACKER_LOADSETTINGS() if settings.ignoreList[v] == true then cdTrackerUIObjects['skillalert'..k]:SetCheck(0) else cdTrackerUIObjects['skillalert'..k]:SetCheck(1) end")
+
+
+
+        cdTrackerUIObjects['skillchat'..k] = cdGroupBox:CreateOrGetControl('checkbox','CDTRACKER_BUTTON_SKILLCHAT_'..k,400,10+offset,100,100)
+        cdTrackerUIObjects['skillchat'..k] = tolua.cast(cdTrackerUIObjects['skillchat'..k],'ui::CCheckBox')
+        cdTrackerUIObjects['skillchat'..k]:Resize(20,20)
+        if settings.chatList[v] == true then
+            cdTrackerUIObjects['skillchat'..k]:SetCheck(1)
+        end
+        cdTrackerUIObjects['skillchat'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd chat "..k.."') CDTRACKER_LOADSETTINGS() if settings.chatList[v] == true then cdTrackerUIObjects['skillchat'..k]:SetCheck(1) else cdTrackerUIObjects['skillchat'..k]:SetCheck(0) end")
+
+        cdTrackerUIObjects['skillmessage'..k] = cdGroupBox:CreateOrGetControl('button','CDTRACKER_BUTTON_SKILLMESSAGE'..k, 450,10+offset,200,25)
+        cdTrackerUIObjects['skillmessage'..k] = tolua.cast(cdTrackerUIObjects['skillmessage'..k],'ui::CButton')
+        if settings.message[v] ~= nil then
+            cdTrackerUIObjects['skillmessage'..k]:SetText('{@st46b}{s12}{#ffffff}'..settings.message[v]..'{/}')
+            cdTrackerUIObjects['skillmessage'..k]:SetTextTooltip('{@st46b}{s12}{#ffffff}'..settings.message[v]..'{/}')
+        else
+            cdTrackerUIObjects['skillmessage'..k]:SetText('{@st46b}{s12}{#ffffff}Set Message{/}')
+            cdTrackerUIObjects['skillmessage'..k]:SetTextTooltip('{@st46b}{s12}{#ffffff}Set Message{/}')
+        end
+        cdTrackerUIObjects['skillmessage'..k]:Resize(200,25)
+        cdTrackerUIObjects['skillmessage'..k]:SetClickSound("button_click_big");
+        cdTrackerUIObjects['skillmessage'..k]:SetOverSound("button_over");
+        cdTrackerUIObjects['skillmessage'..k]:SetSkinName('quest_box')
+        cdTrackerUIObjects['skillmessage'..k]:SetEventScript(ui.LBUTTONUP,"CD_SET_CHAT_MESSAGE("..k..")")
+    
+        cdTrackerUIObjects['skilltime'..k] = cdGroupBox:CreateOrGetControl('edit','CDTRACKER_SKILLTIME'..k, 685,10+offset,50,30)
+        cdTrackerUIObjects['skilltime'..k] = tolua.cast(cdTrackerUIObjects['skilltime'..k],'ui::CEditControl')
+
+        cdTrackerUIObjects['skilltimelabel'..k] = cdTrackerUIObjects['skilltime'..k]:CreateOrGetControl('richtext','CDTRACKER_SKILLTIMELABEL'..k, 0,0,30,30)
+        cdTrackerUIObjects['skilltimelabel'..k] = tolua.cast(cdTrackerUIObjects['skilltimelabel'..k],'ui::CRichText')
+        cdTrackerUIObjects['skilltimelabel'..k]:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
+        cdTrackerUIObjects['skilltimelabel'..k]:EnableHitTest(0)
+
+        if settings.time[v] == nil then
+            cdTrackerUIObjects['skilltimelabel'..k]:SetText('{@st66b}{#ffffff}'..settings.checkVal)
+        else
+            cdTrackerUIObjects['skilltimelabel'..k]:SetText('{@st66b}{#ffffff}'..settings.time[v])
+        end
+
+        cdTrackerUIObjects['skilltime'..k]:SetEventScript(ui.LBUTTONUP,"cdTrackerUIObjects['skilltimelabel"..k.."']:ShowWindow(0)")
+        cdTrackerUIObjects['skilltime'..k]:SetLostFocusingScp("cdTrackerUIObjects['skilltimelabel"..k.."']:ShowWindow(1)")
+        cdTrackerUIObjects['skilltime'..k]:SetEventScript(ui.ENTERKEY,"CD_SET_TIME("..k..")")
+
+        cdTrackerUIObjects['skill_'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_SKILL__'..k,10,25+offset,100,5)
+        cdTrackerUIObjects['skill_'..k] = tolua.cast(cdTrackerUIObjects['skill_'..k],'ui::CRichText')
+        cdTrackerUIObjects['skill_'..k]:SetText('{@st66b}{#708090}'..dots..'{/}')
+        cdTrackerUIObjects['skill_'..k]:EnableHitTest(0)
+
+        offset = offset+35
+    end
+
+    for k,v in ipairs(buffList) do 
+        buffname = v:gsub('%[Buff%]','')
+        cdTrackerUIObjects['buff'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_BUFF_'..k,10,10+offset,100,100)
+        cdTrackerUIObjects['buff'..k] = tolua.cast(cdTrackerUIObjects['buff'..k],'ui::CRichText')
+        cdTrackerUIObjects['buff'..k]:SetText('{@st66b}{#ccffff}[Buff]{#ffffff}'..buffname..'{/}')
+        cdTrackerUIObjects['buff'..k]:EnableHitTest(0)
+
+        cdTrackerUIObjects['buffalert'..k] = cdGroupBox:CreateOrGetControl('checkbox','CDTRACKER_BUTTON_BUFFALERT_'..k,300,10+offset,100,100)
+        cdTrackerUIObjects['buffalert'..k] = tolua.cast(cdTrackerUIObjects['buffalert'..k],'ui::CCheckBox')
+        cdTrackerUIObjects['buffalert'..k]:Resize(20,20)
+        if settings.ignoreList[v] == true then
+            cdTrackerUIObjects['buffalert'..k]:SetCheck(0)
+        else
+            cdTrackerUIObjects['buffalert'..k]:SetCheck(1)
+        end
+        cdTrackerUIObjects['buffalert'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd alert "..k+#skillList.."') CDTRACKER_LOADSETTINGS() if settings.ignoreList[v] == true then cdTrackerUIObjects['buffalert'..k]:SetCheck(0) else cdTrackerUIObjects['buffalert'..k]:SetCheck(1) end")
+
+        cdTrackerUIObjects['buff_'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_BUFF__'..k,10,25+offset,100,5)
+        cdTrackerUIObjects['buff_'..k] = tolua.cast(cdTrackerUIObjects['buff_'..k],'ui::CRichText')
+        cdTrackerUIObjects['buff_'..k]:SetText('{@st66b}{#708090}'..dots..'{/}')
+        cdTrackerUIObjects['buff_'..k]:EnableHitTest(0)
+
+        offset = offset+35
+    end
+
+end
+
+function TOGGLE_CD(setting)
+    CDTRACKER_LOADSETTINGS()
+    if setting == 'enabled' then
+        if settings.alerts then
+            ui.Chat('/cd off')
+        else
+            ui.Chat('/cd on')
+        end
+        CDTRACKER_LOADSETTINGS()
+        if settings.alerts then enabled = '{#00cc00}on' else enabled = '{#cc0000}off' end
+        cdTrackerUIObjects['enabled']:SetText('{@st66b}{#ffffff}cdtracker:'..enabled..'{/}')
+        return;
+    end
+    ui.Chat('/cd '..setting)
+    CDTRACKER_LOADSETTINGS()
+    if settings[setting] then enabled = '{#00cc00}on' else enabled = '{#cc0000}off' end
+    cdTrackerUIObjects[setting]:SetText('{@st66b}{#ffffff}'..setting..':'..enabled..'{/}')
+end
+
+function CD_CHANGE_CHAT_TYPE()
+    CDTRACKER_LOADSETTINGS()
+    if settings.chattype == 1 then
+        ui.Chat('/cd chattype 2')
+    else
+        ui.Chat('/cd chattype 1')
+    end
+    CDTRACKER_LOADSETTINGS()
+    if settings.chattype == 1 then chattype = 'all' else chattype = 'party' end
+    cdTrackerUIObjects['chattype']:SetText('{@st66b}{#ffffff}chat type: '..chattype..'{/}')
+end
+
+function CDTRACKER_TOGGLE_FRAME()
+    cdTrackerUI = ui.GetFrame('CDTRACKER_UI')
+    if cdTrackerUI == nil then
+        CDTRACKER_CREATE_FRAME()
+    elseif cdTrackerUI:IsVisible() == 1 then
+        cdTrackerUI:ShowWindow(0)
+    end
+end
+
+function CD_SET_TIME(id)
+    time = cdTrackerUIObjects['skilltime'..id]:GetText()
+
+    ui.Chat('/cd time '..id..' '..time)
+    
+    cdTrackerUIObjects['skilltimelabel'..id]:SetText('{@st66b}{#ffffff}'..time..'{/}')
+    cdTrackerUIObjects['skilltimelabel'..id]:ShowWindow(1)
+    cdTrackerUIObjects['skilltime'..id]:SetText('')
+    cdTrackerUIObjects['skilltime'..id]:ReleaseFocus()
+
+end
+
+function CD_SET_MAIN_TIME()
+    time = cdTrackerUIObjects['timebox']:GetText()
+    if time == '' then
+        return;
+    end
+
+    ui.Chat('/cd '..time)
+    cdTrackerUIObjects['timelabel']:SetText('{@st66b}{#ffffff}'..time..'{/}')
+    cdTrackerUIObjects['timelabel']:ShowWindow(1)
+
+    CDTRACKER_CREATE_FRAME()
+    cdTrackerUIObjects['timebox']:SetText('')
+    cdTrackerUIObjects['timebox']:ReleaseFocus()
+
+end
+
+function CD_SET_SIZE()
+    size = cdTrackerUIObjects['sizebox']:GetText()
+    if size == '' then
+        return;
+    end
+
+    ui.Chat('/cd size '..size)
+    cdTrackerUIObjects['sizelabel']:SetText('{@st66b}{#ffffff}'..size..'{/}')
+    cdTrackerUIObjects['sizelabel']:ShowWindow(1)
+
+    CDTRACKER_CREATE_FRAME()
+    cdTrackerUIObjects['sizebox']:SetText('')
+    cdTrackerUIObjects['sizebox']:ReleaseFocus()
+end
+
+
+function CD_SEND_CHAT_MESSAGE(id)
+    message = cdTrackerUIObjects['skillmessageinput'..id]:GetText()
+    ui.Chat('/cd chat '..id..' '..message)
+
+    cdTrackerUIObjects['skillmessage'..id]:SetText('{@st46b}{s12}{#ffffff}'..message..'{/}')
+    ui.DestroyFrame('CDTRACKER_INPUT')
+    CD_LIST()
+end
+
+function CD_SET_CHAT_MESSAGE(id)
+    cdTrackerInput =  ui.CreateNewFrame('cdtracker','CDTRACKER_INPUT')
+    cdTrackerInput:SetLayerLevel(101)
+    cdTrackerInput:EnableHitTest(1)
+    cdTrackerInput:Resize(500,50)
+    cdTrackerUIObjects['skillmessageinput'..id] = cdTrackerInput:CreateOrGetControl('edit','CDTRACKER_SKILLMESSAGEINPUT'..id, 0,0,500,30)
+    cdTrackerUIObjects['skillmessageinput'..id] = tolua.cast(cdTrackerUIObjects['skillmessageinput'..id],'ui::CEditControl')
+    cdTrackerUIObjects['skillmessageinput'..id]:AcquireFocus()
+    cdTrackerUIObjects['skillmessageinput'..id]:SetEnable(1)
+    cdTrackerUIObjects['skillmessageinput'..id]:SetEventScript(ui.ENTERKEY,"CD_SEND_CHAT_MESSAGE("..id..")")
 end
