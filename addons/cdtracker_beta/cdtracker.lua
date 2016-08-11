@@ -76,6 +76,7 @@ function CDTRACKER_ON_INIT(addon, frame)
     end
     checkChatFrame = ui.GetFrame('chat')
     acutil.slashCommand('/cd',CD_TRACKER_CHAT_CMD)
+    acutil.slashCommand('/cdtracker',CDTRACKER_TOGGLE_FRAME)
     CDTRACKER_LOADSETTINGS()
     if not settings.firstTimeMessage then
         ui.MsgBox("{s18}{#c70404}Important:{nl} {nl}{#000000}CDTracker Beta settings have been changed, if you are upgrading from an older version please reset using{nl} {nl}{#03134d}/cd reset{nl} {nl}This message will only show once.","helpBoxTable.helpBox_1()","helpBoxTable.helpBox_1()");
@@ -835,7 +836,7 @@ end
 
 
 
-acutil.slashCommand('/cdtracker',CDTRACKER_TOGGLE_FRAME)
+
 cdTrackerUI = nil
 cdTrackerSkillsUI = nil
 cdTrackerUIObjects = {}
