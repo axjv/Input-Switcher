@@ -418,6 +418,8 @@ function FIND_NEXT_SLOT(index, cdtype)
     end
 end
 
+cdLastSkillCast = nil
+
 function ICON_USE_HOOKED(object, reAction)
     _G['ICON_USE_OLD'](object, reAction);
     -- CHANGE_MOUSE_CURSOR("MORU", "MORU_UP", "CURSOR_CHECK_REINF");
@@ -434,15 +436,24 @@ function ICON_USE_HOOKED(object, reAction)
             end
             ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
         end
-        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 and TIME_ELAPSED(0.5) then
-            if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
-                ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
+        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
+            if cdLastSkillCast == cdTrackSkill[index]['fullName'] and not TIME_ELAPSED(1) then
             else
-                ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
+                if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
+                    ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
+                else
+                    ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
+                end
+                if settings.chattype == 1 then
+                    msgDisplay  = true
+                    castMessage = true
+                else
+                    msgDisplay  = false
+                    castMessage = false
+                end
+                timer = imcTime.GetAppTime()
             end
-            msgDisplay  = true
-            castMessage = true
-            timer       = imcTime.GetAppTime()
+            cdLastSkillCast = cdTrackSkill[index]['fullName']
         end
     else
         return;
@@ -519,8 +530,9 @@ function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
         end
     end
     if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true then
-        if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 then
+        if TIME_ELAPSED(2) and msgDisplay == true and checkChatFrame:IsVisible() == 0 and settings.chattype == 1 then
             ui.Chat('!!')
+            timer = imcTime.GetAppTime()
             castMessage = false
             msgDisplay  = false
         end
@@ -777,7 +789,6 @@ end
 function TIME_ELAPSED(val)
     local elapsed = imcTime.GetAppTime() - timer
     if elapsed > val then
-        timer = imcTime.GetAppTime()
         return true
     end
     return false
