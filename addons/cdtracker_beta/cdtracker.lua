@@ -65,6 +65,7 @@ function CDTRACKER_ON_INIT(addon, frame)
     acutil.setupHook(ICON_USE_HOOKED,'ICON_USE')
     acutil.setupHook(ICON_UPDATE_SKILL_COOLDOWN_HOOKED,'ICON_UPDATE_SKILL_COOLDOWN')
     acutil.setupHook(SetKeyboardSelectMode_HOOKED,'SetKeyboardSelectMode')
+    acutil.setupHook(QUICKSLOTNEXPBAR_ON_DROP_HOOKED,'QUICKSLOTNEXPBAR_ON_DROP')
     addon:RegisterMsg('RESTQUICKSLOT_OPEN', 'QUICKSLOTNEXPBAR_KEEPVISIBLE');
     addon:RegisterMsg('RESTQUICKSLOT_CLOSE', 'QUICKSLOTNEXPBAR_RESTORE');
     cdTrackSkill          = {}
@@ -111,6 +112,14 @@ end
 function QUICKSLOTNEXPBAR_RESTORE()
     local quickSlotBar = ui.GetFrame('quickslotnexpbar')
     quickSlotBar:SetVisible(1)
+end
+
+function QUICKSLOTNEXPBAR_ON_DROP_HOOKED(frame, control, argStr, argNum)
+    skillIndex      = 1
+    cdTrackSkill          = {}
+    cdTrackSkill['Slots'] = {}
+    cdTrackSkill['icon']  = {}
+    return _G['QUICKSLOTNEXPBAR_ON_DROP_OLD'](frame, control, argStr, argNum)
 end
 
 function CD_DRAG_START()
@@ -422,9 +431,7 @@ end
 cdLastSkillCast = nil
 
 function ICON_USE_HOOKED(object, reAction)
-    _G['ICON_USE_OLD'](object, reAction);
-    -- CHANGE_MOUSE_CURSOR("MORU", "MORU_UP", "CURSOR_CHECK_REINF");
-    -- RESET_MOUSE_CURSOR();
+    
     local iconPt = object;
     if iconPt  ~=  nil then
         local icon = tolua.cast(iconPt, 'ui::CIcon');
@@ -457,8 +464,8 @@ function ICON_USE_HOOKED(object, reAction)
             cdLastSkillCast = cdTrackSkill[index]['fullName']
         end
     else
-        return;
     end
+    return _G['ICON_USE_OLD'](object, reAction);
 end
 
 function ICON_UPDATE_SKILL_COOLDOWN_HOOKED(icon)
@@ -1158,6 +1165,15 @@ function CD_LIST()
     cdTrackerUIObjects['skillhelp']:SetText('{@st66b}{#ffffff}Right-click to return to the main menu.{/}')
     cdTrackerUIObjects['skillhelp']:SetSkinName("textview");
     cdTrackerUIObjects['skillhelp']:EnableHitTest(0)
+
+    cdTrackerUIObjects['skillrefresh'] = cdTrackerSkillsUI:CreateOrGetControl('button','CDTRACKER_SKILLREFRESH',600,475,200,30)
+    cdTrackerUIObjects['skillrefresh'] = tolua.cast(cdTrackerUIObjects['skillrefresh'],'ui::CButton')
+    cdTrackerUIObjects['skillrefresh']:SetText('{@st66b}{#ffffff}refresh{/}')
+    cdTrackerUIObjects['skillrefresh']:SetClickSound("button_click_big");
+    cdTrackerUIObjects['skillrefresh']:SetOverSound("button_over");
+    cdTrackerUIObjects['skillrefresh']:SetSkinName('quest_box')
+    cdTrackerUIObjects['skillrefresh']:SetEventScript(ui.LBUTTONUP,"CD_LIST()")
+
 
     offset = 0
     for k, v in ipairs(skillList) do
