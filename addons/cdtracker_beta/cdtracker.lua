@@ -435,35 +435,37 @@ function ICON_USE_HOOKED(object, reAction)
     local iconPt = object;
     if iconPt  ~=  nil then
         local icon = tolua.cast(iconPt, 'ui::CIcon');
-        local index = CHECK_ICON_EXIST(icon)
-        cdTrackSkill[index]['curTime']     = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
-        cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
-        if cdTrackSkill[index]['curTimeSecs'] ~= 0 then
-            for i = 1,3 do
-                ui.AddText('SystemMsgFrame',' ')
-            end
-            ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
-        end
-        if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
-            if cdLastSkillCast == cdTrackSkill[index]['fullName'] and not TIME_ELAPSED(1) then
-            else
-                if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
-                    ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
-                else
-                    ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
+        local iconInfo = icon:GetInfo()
+        if iconInfo.category == 'Skill' then
+            local index = CHECK_ICON_EXIST(icon)
+            cdTrackSkill[index]['curTime']     = cdTrackSkill[index]['sklInfo']:GetCurrentCoolDownTime();
+            cdTrackSkill[index]['curTimeSecs'] = math.ceil(cdTrackSkill[index]['curTime']/1000)
+            if cdTrackSkill[index]['curTimeSecs'] ~= 0 then
+                for i = 1,3 do
+                    ui.AddText('SystemMsgFrame',' ')
                 end
-                if settings.chattype == 1 then
-                    msgDisplay  = true
-                    castMessage = true
-                else
-                    msgDisplay  = false
-                    castMessage = false
-                end
-                timer = imcTime.GetAppTime()
+                ui.AddText('SystemMsgFrame',cdTrackSkill[index]['fullName']..' ready in '..cdTrackSkill[index]['curTimeSecs']..' seconds.')
             end
-            cdLastSkillCast = cdTrackSkill[index]['fullName']
+            if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
+                if cdLastSkillCast == cdTrackSkill[index]['fullName'] and not TIME_ELAPSED(1) then
+                else
+                    if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
+                        ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
+                    else
+                        ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
+                    end
+                    if settings.chattype == 1 then
+                        msgDisplay  = true
+                        castMessage = true
+                    else
+                        msgDisplay  = false
+                        castMessage = false
+                    end
+                    timer = imcTime.GetAppTime()
+                end
+                cdLastSkillCast = cdTrackSkill[index]['fullName']
+            end
         end
-    else
     end
     return _G['ICON_USE_OLD'](object, reAction);
 end
