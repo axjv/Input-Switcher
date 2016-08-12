@@ -449,7 +449,7 @@ function ICON_USE_HOOKED(object, reAction)
             if settings.chatList['[Skill] '..cdTrackSkill[index]['fullName']] == true and cdTrackSkill[index]['curTimeSecs'] == 0 and checkChatFrame:IsVisible() == 0 then
                 if cdLastSkillCast == cdTrackSkill[index]['fullName'] and not TIME_ELAPSED(1) then
                 else
-                    if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] then
+                    if settings.message['[Skill] '..cdTrackSkill[index]['fullName']] ~= nil then
                         ui.Chat(chatTypes[settings.chattype]..SANITIZE_CHAT_OUTPUT(settings.message['[Skill] '..cdTrackSkill[index]['fullName']]))
                     else
                         ui.Chat(chatTypes[settings.chattype]..'Casting '..SANITIZE_CHAT_OUTPUT(cdTrackSkill[index]['fullName']..'!'))
@@ -1195,9 +1195,7 @@ function CD_LIST()
         else
             cdTrackerUIObjects['skillalert'..k]:SetCheck(1)
         end
-        cdTrackerUIObjects['skillalert'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd alert "..k.."') CDTRACKER_LOADSETTINGS() if settings.ignoreList[v] == true then cdTrackerUIObjects['skillalert'..k]:SetCheck(0) else cdTrackerUIObjects['skillalert'..k]:SetCheck(1) end")
-
-
+        cdTrackerUIObjects['skillalert'..k]:SetEventScript(ui.LBUTTONUP,"CD_SET_SKILL_ALERT("..k..")")
 
         cdTrackerUIObjects['skillchat'..k] = cdGroupBox:CreateOrGetControl('checkbox','CDTRACKER_BUTTON_SKILLCHAT_'..k,400,10+offset,100,100)
         cdTrackerUIObjects['skillchat'..k] = tolua.cast(cdTrackerUIObjects['skillchat'..k],'ui::CCheckBox')
@@ -1205,7 +1203,7 @@ function CD_LIST()
         if settings.chatList[v] == true then
             cdTrackerUIObjects['skillchat'..k]:SetCheck(1)
         end
-        cdTrackerUIObjects['skillchat'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd chat "..k.."') CDTRACKER_LOADSETTINGS() if settings.chatList[v] == true then cdTrackerUIObjects['skillchat'..k]:SetCheck(1) else cdTrackerUIObjects['skillchat'..k]:SetCheck(0) end")
+        cdTrackerUIObjects['skillchat'..k]:SetEventScript(ui.LBUTTONUP,"CD_SET_SKILL_CHAT("..k..")")
 
         cdTrackerUIObjects['skillmessage'..k] = cdGroupBox:CreateOrGetControl('button','CDTRACKER_BUTTON_SKILLMESSAGE'..k, 450,10+offset,200,25)
         cdTrackerUIObjects['skillmessage'..k] = tolua.cast(cdTrackerUIObjects['skillmessage'..k],'ui::CButton')
@@ -1263,7 +1261,7 @@ function CD_LIST()
         else
             cdTrackerUIObjects['buffalert'..k]:SetCheck(1)
         end
-        cdTrackerUIObjects['buffalert'..k]:SetEventScript(ui.LBUTTONUP,"ui.Chat('/cd alert "..k+#skillList.."') CDTRACKER_LOADSETTINGS() if settings.ignoreList[v] == true then cdTrackerUIObjects['buffalert'..k]:SetCheck(0) else cdTrackerUIObjects['buffalert'..k]:SetCheck(1) end")
+        cdTrackerUIObjects['buffalert'..k]:SetEventScript(ui.LBUTTONUP,"")
 
         cdTrackerUIObjects['buff_'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_BUFF__'..k,10,25+offset,100,5)
         cdTrackerUIObjects['buff_'..k] = tolua.cast(cdTrackerUIObjects['buff_'..k],'ui::CRichText')
@@ -1273,6 +1271,16 @@ function CD_LIST()
         offset = offset+35
     end
 
+end
+
+function CD_SET_BUFF_ALERT(id)
+    ui.Chat('/cd alert '..id+#skillList)
+    CDTRACKER_LOADSETTINGS() 
+    if settings.ignoreList[buffList[id]] == true then 
+        cdTrackerUIObjects['buffalert'..id]:SetCheck(0) 
+    else 
+        cdTrackerUIObjects['buffalert'..id]:SetCheck(1) 
+    end
 end
 
 function TOGGLE_CD(setting)
@@ -1322,7 +1330,7 @@ function CD_SET_TIME(id)
     
     cdTrackerUIObjects['skilltimelabel'..id]:SetText('{@st66b}{#ffffff}'..time..'{/}')
     cdTrackerUIObjects['skilltimelabel'..id]:ShowWindow(1)
-    cdTrackerUIObjects['skilltime'..id]:SetText('')
+    cdTrackerUIObjects['skilltime'..id]:SetText(' ')
     cdTrackerUIObjects['skilltime'..id]:ReleaseFocus()
 
 end
@@ -1338,7 +1346,7 @@ function CD_SET_MAIN_TIME()
     cdTrackerUIObjects['timelabel']:ShowWindow(1)
 
     CDTRACKER_CREATE_FRAME()
-    cdTrackerUIObjects['timebox']:SetText('')
+    cdTrackerUIObjects['timebox']:SetText(' ')
     cdTrackerUIObjects['timebox']:ReleaseFocus()
 
 end
@@ -1388,4 +1396,24 @@ function CD_SET_CHAT_MESSAGE(id)
     cdTrackerUIObjects['skillmessageinput'..id]:AcquireFocus()
     cdTrackerUIObjects['skillmessageinput'..id]:SetEnable(1)
     cdTrackerUIObjects['skillmessageinput'..id]:SetEventScript(ui.ENTERKEY,"CD_SEND_CHAT_MESSAGE("..id..")")
+end
+
+function CD_SET_SKILL_CHAT(id)
+    ui.Chat('/cd chat '..id) 
+    CDTRACKER_LOADSETTINGS() 
+    if settings.chatList[skillList[id]] == true then 
+        cdTrackerUIObjects['skillchat'..id]:SetCheck(1) 
+    else 
+        cdTrackerUIObjects['skillchat'..id]:SetCheck(0) 
+    end
+end
+
+function CD_SET_SKILL_ALERT(id)
+    ui.Chat('/cd alert '..id) 
+    CDTRACKER_LOADSETTINGS() 
+    if settings.ignoreList[skillList[id]] == true then 
+        cdTrackerUIObjects['skillalert'..id]:SetCheck(0) 
+    else 
+        cdTrackerUIObjects['skillalert'..id]:SetCheck(1) 
+    end
 end
