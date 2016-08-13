@@ -865,7 +865,7 @@ end
 function CDTRACKER_CREATE_FRAME()
     CDTRACKER_LOADSETTINGS()
     cdTrackerUI = ui.CreateNewFrame('cdtracker','CDTRACKER_UI')
-    cdTrackerUI:EnableHittestFrame(0)
+    -- cdTrackerUI:EnableHittestFrame(0)
     cdTrackerUI:SetLayerLevel(100)
     cdTrackerUI:SetSkinName(frameSkins[7])
     cdTrackerUI:Resize(500,500)
@@ -1326,35 +1326,35 @@ function CDTRACKER_TOGGLE_FRAME()
 end
 
 function CD_SET_TIME(id)
-    time = cdTrackerUIObjects['skilltime'..id]:GetText()
+    local timeVal = cdTrackerUIObjects['skilltime'..id]:GetText()
 
-    ui.Chat('/cd time '..id..' '..time)
+    ui.Chat('/cd time '..id..' '..timeVal)
     
-    cdTrackerUIObjects['skilltimelabel'..id]:SetText('{@st66b}{#ffffff}'..time..'{/}')
+    cdTrackerUIObjects['skilltimelabel'..id]:SetText('{@st66b}{#ffffff}'..timeVal..'{/}')
     cdTrackerUIObjects['skilltimelabel'..id]:ShowWindow(1)
-    cdTrackerUIObjects['skilltime'..id]:SetText(' ')
+    cdTrackerUIObjects['skilltime'..id]:SetText('')
     cdTrackerUIObjects['skilltime'..id]:ReleaseFocus()
 
 end
 
 function CD_SET_MAIN_TIME()
-    time = cdTrackerUIObjects['timebox']:GetText()
-    if time == '' then
+    local timeVal = cdTrackerUIObjects['timebox']:GetText()
+    if timeVal == '' then
         return;
     end
 
-    ui.Chat('/cd '..time)
-    cdTrackerUIObjects['timelabel']:SetText('{@st66b}{#ffffff}'..time..'{/}')
+    ui.Chat('/cd '..timeVal)
+    cdTrackerUIObjects['timelabel']:SetText('{@st66b}{#ffffff}'..timeVal..'{/}')
     cdTrackerUIObjects['timelabel']:ShowWindow(1)
 
     CDTRACKER_CREATE_FRAME()
-    cdTrackerUIObjects['timebox']:SetText(' ')
+    cdTrackerUIObjects['timebox']:SetText('')
     cdTrackerUIObjects['timebox']:ReleaseFocus()
 
 end
 
 function CD_SET_SIZE()
-    size = cdTrackerUIObjects['sizebox']:GetText()
+    local size = cdTrackerUIObjects['sizebox']:GetText()
     if size == '' then
         return;
     end
@@ -1370,7 +1370,7 @@ end
 
 
 function CD_SEND_CHAT_MESSAGE(id)
-    message = cdTrackerUIObjects['skillmessageinput'..id]:GetText()
+    local message = cdTrackerUIObjects['skillmessageinput'..id]:GetText()
     local skills = RETURN_SKILL_LIST()
     if message == '' then
         settings.message[skillList[id]] = nil
