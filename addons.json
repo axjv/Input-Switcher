@@ -74,8 +74,8 @@
 		"name" : "SFX Toggle",
 		"file" : "sfxtoggle",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.9",
-		"releaseTag" : "nectarine",
+		"fileVersion" : "v0.1.0",
+		"releaseTag" : "quince",
 		"unicode" : "⛄",
 		"description" : "Automatically change graphics settings based on fps. /effect to toggle, /effect help for more commands.",
 		"tags" : [
@@ -88,8 +88,8 @@
 		"name" : "Battle Mode",
 		"file" : "battlemode",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.1",
-		"releaseTag" : "pear",
+		"fileVersion" : "v0.0.2",
+		"releaseTag" : "quince",
 		"unicode" : "⛄",
 		"description" : "Disables UI interaction for easier combat when using mousemode. /bm to toggle",
 		"tags" : [
