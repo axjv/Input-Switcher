@@ -91,7 +91,7 @@
 		"fileVersion" : "v0.0.2",
 		"releaseTag" : "quince",
 		"unicode" : "⛄",
-		"description" : "Disables UI interaction for easier combat when using mousemode. /bm to toggle",
+		"description" : "Disables UI interaction for easier combat when using mousemode. /bm to toggle, /bm config to configure",
 		"tags" : [
 			"mouse",
 			"battle",
