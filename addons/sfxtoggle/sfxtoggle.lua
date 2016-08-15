@@ -42,8 +42,14 @@ end
 
 
 function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
-    timeElapsed = imcTime.GetAppTime() - timer
     effectFrame = ui.GetFrame('EFFECTS_FRAME')
+    if settings.enable == 0 then
+        if effectFrame ~= nil then
+            effectFrame:ShowWindow(0)
+        end
+        return;
+    end
+    timeElapsed = imcTime.GetAppTime() - timer
     if effectFrame == nil then
         effectFrame = ui.CreateNewFrame('bandicam','EFFECTS_FRAME')
         effectFrame:SetBorder(5, 0, 0, 0)
@@ -52,39 +58,47 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
         effectText:SetGravity(ui.CENTER_HORZ,ui.CENTER_VERT)
         effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
     end
-    if settings.enable == 1 then
-        effectFrame:ShowWindow(1)
-    else
-        effectFrame:ShowWindow(0)
-    end
-    if settings.enable == 1 and timeElapsed > 3 then
+    effectFrame:ShowWindow(1)
+
+    if timeElapsed > 3 then
         timeElapsed = 0
         timer = imcTime.GetAppTime()
         local fpsnumber = tonumber(argStr)
-        if fpsnumber < settings.thresh[1] then
+        -- enter no effects below thresh 1
+        if fpsnumber < settings.thresh[1] and lowMode ~= 2 then
             effectSwitch = 0
             lowMode = 2
             imcperfOnOff.EnableIMCEffect(0);
             imcperfOnOff.EnableEffect(0);
             SET_EFFECT_MODE(effectSwitch)
+        -- enter low effects from no effects above thresh 2
         elseif fpsnumber > settings.thresh[2] and lowMode == 2 then
             effectSwitch = 0
             lowMode = 1
             imcperfOnOff.EnableIMCEffect(1);
             imcperfOnOff.EnableEffect(1);
             SET_EFFECT_MODE(effectSwitch)
+        -- enter low effects from full effects below thresh 2
         elseif fpsnumber < settings.thresh[2] and lowMode == 0 then
             effectSwitch = 0
             lowMode = 1
             imcperfOnOff.EnableIMCEffect(1);
             imcperfOnOff.EnableEffect(1);
             SET_EFFECT_MODE(effectSwitch)
+        -- enter full effects above thresh 3
         elseif fpsnumber > settings.thresh[3] and lowMode ~= 0 then
             effectSwitch = 1
             lowMode = 0
             SET_EFFECT_MODE(effectSwitch)
             imcperfOnOff.EnableIMCEffect(1);
             imcperfOnOff.EnableEffect(1);
+        -- enter low effects below thresh 3
+        elseif fpsnumber < settings.thresh[3] and lowMode ~= 1 then
+            effectSwitch = 0
+            lowMode = 1
+            imcperfOnOff.EnableIMCEffect(1);
+            imcperfOnOff.EnableEffect(1);
+            SET_EFFECT_MODE(effectSwitch)
         end
     end
 end
