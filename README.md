@@ -42,6 +42,10 @@ Switch it up with 3 different styles! Style is a number from 1-3, speed is in fr
 
 Alerts for skill cooldowns. Text, audio, and visual notifications supported.
 
+* /cdtracker
+
+Opens UI.
+
 * /cd \<number\> 
 
 Sets how many seconds cooldown to be notified.
