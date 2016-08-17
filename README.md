@@ -1,8 +1,15 @@
 # Input Switcher and more
 Addons for Tree of Savior.
 
-
 ## Addons
+
+#### battlemode
+
+No more frames in the way of targeting.
+
+* /bm - toggles battle mode
+* /bm config toggles configuration mode
+
 #### regentimer
 
 Infinite SP with the power of sitting.
