@@ -19,8 +19,8 @@
 		"name" : "Cooldown Tracker",
 		"file" : "cdtracker",
 		"extension" : "ipf",
-		"fileVersion" : "v3.0.8",
-		"releaseTag" : "pear",
+		"fileVersion" : "v3.0.9",
+		"releaseTag" : "rambutan",
 		"unicode" : "⛄",
 		"description" : "A convenient way to view your skill cooldowns. Includes text notifications, sound alerts, and chat message alerts. Access settings through '/cdtracker'. \nType '/cd help all' in game for a list of commands.\nRefer to the README on the website for information.",
 		"tags" : [
@@ -88,8 +88,8 @@
 		"name" : "Battle Mode",
 		"file" : "battlemode",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.2",
-		"releaseTag" : "quince",
+		"fileVersion" : "v0.0.3",
+		"releaseTag" : "rambutan",
 		"unicode" : "⛄",
 		"description" : "Disables UI interaction for easier combat when using mousemode. /bm to toggle, /bm config to configure",
 		"tags" : [
