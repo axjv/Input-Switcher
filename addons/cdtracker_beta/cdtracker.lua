@@ -977,7 +977,6 @@ function CDTRACKER_CREATE_FRAME()
 
     cdTrackerUIObjects['sizebox'] = cdTrackerUI:CreateOrGetControl('edit','CDTRACKER_SIZEBOX', 320,125,50,30)
     cdTrackerUIObjects['sizebox'] = tolua.cast(cdTrackerUIObjects['sizebox'],'ui::CEditControl')
-    cdTrackerUIObjects['sizebox']:SetEventScript(ui.ENTERKEY,"CD_SET_SIZE")
 
     cdTrackerUIObjects['sizelabel'] = cdTrackerUIObjects['sizebox']:CreateOrGetControl('richtext','CDTRACKER_SIZELABEL', 0,0,30,30)
     cdTrackerUIObjects['sizelabel'] = tolua.cast(cdTrackerUIObjects['sizelabel'],'ui::CRichText')
@@ -1263,7 +1262,7 @@ function CD_LIST()
         else
             cdTrackerUIObjects['buffalert'..k]:SetCheck(1)
         end
-        cdTrackerUIObjects['buffalert'..k]:SetEventScript(ui.LBUTTONUP,"")
+        cdTrackerUIObjects['buffalert'..k]:SetEventScript(ui.LBUTTONUP,"CD_SET_BUFF_ALERT("..k..")")
 
         cdTrackerUIObjects['buff_'..k] = cdGroupBox:CreateOrGetControl('richtext','CDTRACKER_BUTTON_BUFF__'..k,10,25+offset,100,5)
         cdTrackerUIObjects['buff_'..k] = tolua.cast(cdTrackerUIObjects['buff_'..k],'ui::CRichText')

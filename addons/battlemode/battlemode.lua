@@ -25,12 +25,17 @@ local BM_CONFIG_TIMER = nil
 local bmIsConfig = false
 -- local bmStatusFrame = {}
 local bmToggleButton = {}
+local battleModeStatus = 0
+CHAT_SYSTEM('Battlemode loaded. Type /bm config to configure.')
 
 function BATTLEMODE_ON_INIT(addon,frame)
     acutil.slashCommand('bm',TOGGLE_BATTLE_MODE)
-    battleModeStatus = 0
-    addon:RegisterMsg('FPS_UPDATE','CREATE_BATTLE_MODE_FRAME')
-    CHAT_SYSTEM('Battlemode loaded. Type /bm config to configure.')
+    if battleModeStatus == nil then
+        battleModeStatus = 0
+    end
+    -- battleModeStatus = 0
+    addon:RegisterMsg('FPS_UPDATE','UPDATE_BATTLE_MODE')
+
 end
 
 function BATTLEMODE_LOADSETTINGS()
@@ -72,14 +77,16 @@ function CREATE_BATTLE_MODE_FRAME()
         bmToggleButton['button']:SetClickSound("button_click_big");
         bmToggleButton['button']:SetOverSound("button_over");
         bmToggleButton['button']:SetSkinName("quest_box");
-        if battleModeStatus == 0 then
-            bmToggleButton['button']:SetText("{@st41}{#ff0000}{s18}bm off")
-        else
-            bmToggleButton['button']:SetText("{@st41}{#009900}{s18}bm on");
-        end
+
         bmToggleButton['button']:ShowWindow(1)
         bmToggleButton['button']:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm')");
     end
+    if battleModeStatus == 0 then
+        bmToggleButton['button']:SetText("{@st41}{#ff0000}{s18}bm off")
+    else
+        bmToggleButton['button']:SetText("{@st41}{#009900}{s18}bm on");
+    end
+
     return battleframe
 end
 
@@ -91,26 +98,6 @@ function SET_FRAME_HITTEST()
             if focusedFrames[curFrameName] == nil then
                 focusedFrames[curFrameName] = curFrame:IsEnableHitTest()
             end
-            -- bmToggleButton['frame'] = ui.CreateNewFrame('battlemode','BM_TOGGLE_BUTTON_FRAME')
-            -- bmToggleButton['frame']:Resize(50,30)
-            -- bmToggleButton['frame']:SetPos(0,0)
-            -- bmToggleButton['button'] = bmToggleButton['frame']:CreateOrGetControl('button','BM_TOGGLE_BUTTON',0,0,50,30)
-            -- bmToggleButton['button'] = tolua.cast(bmToggleButton['button'],'ui::CButton')
-            -- bmToggleButton['button']:SetClickSound("button_click_big");
-            -- bmToggleButton['button']:SetOverSound("button_over");
-            -- bmToggleButton['button']:SetSkinName("quest_box");
-            -- bmToggleButton['button']:ShowWindow(1)
-            -- bmToggleButton['button']:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm')");
-            -- bmStatusFrame[curFrameName] = ui.CreateNewFrame('battlemode','BM_STATUS_'..curFrameName)
-            -- bmStatusFrame[curFrameName]:Resize(curFrame:GetWidth(),curFrame:GetHeight())
-            -- bmStatusFrame[curFrameName]:SetPos(curFrame:GetX(),curFrame:GetY())
-            -- bmStatusFrame[curFrameName]:SetSkinName('systemmenu_vertical')
-            -- bmStatusFrame[curFrameName]:SetLayerLevel(100)
-            -- bmStatusFrame[curFrameName]:EnableHitTest(0)
-            -- bmStatusFrame[curFrameName..'text'] = bmStatusFrame[curFrameName]:CreateOrGetControl('richtext',curFrameName..'text',0,0,200,50)
-            -- bmStatusFrame[curFrameName..'text'] = tolua.cast(bmStatusFrame[curFrameName..'text'],'ui::CRichText')
-            -- bmStatusFrame[curFrameName..'text']:SetPos(curFrame:GetWidth()/2-bmStatusFrame[curFrameName..'text']:GetWidth()/2,curFrame:GetHeight()/2+bmStatusFrame[curFrameName..'text']:GetHeight()/2)
-            -- bmStatusFrame[curFrameName..'text']:SetText('{#ff0000}bm ('..curFrameName..')')
             curFrame:EnableHitTest(0)
         end
     end
@@ -143,11 +130,7 @@ function UPDATE_BATTLE_MODE()
                 hitTestFrame:EnableHitTest(1)
             end
         end
-        -- for k,v in pairs(bmStatusFrame) do
-        --     ui.DestroyFrame('BM_STATUS_'..k)
-        -- end
     focusedFrames = {}
-    -- bmStatusFrame = {}
     else
         SET_FRAME_HITTEST()
         BATTLEMODE_TIMER:SetUpdateScript('UPDATE_FRAME_HITTEST');
@@ -188,7 +171,6 @@ function BATTLEMODE_CONFIG_UPDATE()
     bmButton:SetEventScript(ui.RBUTTONUP, "ui.Chat('/bm config')")
     local curFrame = ui.GetFocusFrame()
     if curFrame ~= nil then
-
         if curFrameName ~= curFrame:GetName() and curFrame:GetName() ~= 'BATTLEMODE_CONTEXT' then
             contextFrame:SetPos(curFrame:GetX()+curFrame:GetWidth()/2-contextFrame:GetWidth()/2,curFrame:GetY()+curFrame:GetHeight()/2-contextFrame:GetHeight()/2)
             contextFrame:ShowWindow(1)
@@ -200,7 +182,6 @@ function BATTLEMODE_CONFIG_UPDATE()
                 bmButton:SetText('{#ff0000}'..curFrame:GetName())
                 bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm whitelist "..curFrame:GetName().."')");
             end
-
             contextFrame:Resize(bmButton:GetWidth(),contextFrame:GetHeight())
             curFrameName = curFrame:GetName()
             
@@ -276,7 +257,6 @@ function TOGGLE_BATTLE_MODE(command)
     end
 
     battleModeStatus = math.abs(battleModeStatus-1)
-
     UPDATE_BATTLE_MODE()
     if battleModeStatus == 0 then
         CHAT_SYSTEM('Battle mode off.')
