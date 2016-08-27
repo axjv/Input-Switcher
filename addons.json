@@ -97,5 +97,18 @@
 			"battle",
 			"mode"
 		]
+	},
+	{
+		"name" : "Assortment",
+		"file" : "assortment",
+		"extension" : "ipf",
+		"fileVersion" : "v0.0.1",
+		"releaseTag" : "strawberry",
+		"unicode" : "⛄",
+		"description" : "Teaching IMC the ABCs. Actually sort your inventory.",
+		"tags" : [
+			"sort",
+			"inventory"
+		]
 	}
 ]
