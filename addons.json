@@ -102,7 +102,7 @@
 		"name" : "Assortment",
 		"file" : "assortment",
 		"extension" : "ipf",
-		"fileVersion" : "v0.0.2",
+		"fileVersion" : "v0.0.3",
 		"releaseTag" : "strawberry",
 		"unicode" : "⛄",
 		"description" : "Teaching IMC the ABCs. Actually sort your inventory.",
