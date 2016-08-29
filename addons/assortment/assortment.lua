@@ -1,7 +1,31 @@
 local inventoryItems = {}
 local acutil = require('acutil')
+local sortLocked = 'on'
+local settings = {}
+local default = {sortLocked = true}
+
+function ASSORTMENT_LOADSETTINGS()
+    local s, err = acutil.loadJSON("../addons/assortment/settings.json");
+    if err then
+        settings = default
+    else
+        settings = s
+        for k,v in pairs(default) do
+            if s[k] == nil then
+                settings[k] = v
+            end
+        end
+    end
+    ASSORTMENT_SAVESETTINGS()
+end
+
+function ASSORTMENT_SAVESETTINGS()
+    table.sort(settings)
+    acutil.saveJSON("../addons/ASSORTMENT/settings.json", settings);
+end
 
 function ASSORTMENT_ON_INIT(addon,frame)
+    ASSORTMENT_LOADSETTINGS()
     acutil.setupHook(SORT_ITEM_INVENTORY_HOOKED,'SORT_ITEM_INVENTORY')
 end
 
@@ -37,7 +61,9 @@ function GET_INVENTORY_LIST()
                     else
                             inventoryItems[i][invIndex].grade = itemCls.ItemGrade..itemCls.Name
                     end
+                    inventoryItems[i][invIndex].icon = itemCls.Icon..dictionary.ReplaceDicIDInCompStr(itemCls.Name)
 
+                    inventoryItems[i][invIndex].lock = invItem.isLockState 
                 end
             end
         end
@@ -75,13 +101,11 @@ function SORT_INVENTORY_BY(type,order)
                 -- GET_INVENTORY_LIST()
                 invItemSort = inventoryItems[k]
                 -- print(order)
-                lowestItem = SORTPLUS_SORTER(invItemSort,count,highestIndex,type,order)
+                lowestItem = ASSORTMENT_SORT(invItemSort,count,highestIndex,type,order)
                 if lowestItem ~= nil then
                     SWAP_ITEMS_(slotset,count,lowestItem)
                     local temp = {}
-                    temp = invItemSort[lowestItem]
-                    invItemSort[lowestItem] = invItemSort[count]
-                    invItemSort[count] = temp
+                    invItemSort[lowestItem], invItemSort[count] = invItemSort[count], invItemSort[lowestItem]
                 end
             end
         end
@@ -89,8 +113,10 @@ function SORT_INVENTORY_BY(type,order)
 end
 
 
-function SORTPLUS_SORTER(invItemSort,currentIndex,highestIndex,sortType,order)
-
+function ASSORTMENT_SORT(invItemSort,currentIndex,highestIndex,sortType,order)
+    if not settings.sortLocked and invItemSort[currentIndex].lock then
+        return;
+    end
     if sortType == 'name' then 
         local firstItem = {'~',0}
         if order ~= 'ascending' then
@@ -116,16 +142,41 @@ function SORTPLUS_SORTER(invItemSort,currentIndex,highestIndex,sortType,order)
         return firstItem[2]
         
     end
-
-    if sortType == 'weight' then 
-        local firstItem = {999999,0}
+    if sortType == 'stacksize' then 
+        local firstItem = {'~',0}
             if order ~= 'ascending' then
-                firstItem[1] = 0
+                firstItem[1] = '!'
             end
         for i = currentIndex,highestIndex do
             if invItemSort[i] == nil then
             else
-                local fullWeight = invItemSort[i].weight * invItemSort[i].count
+                local fullWeight = acutil.leftPad(tostring(invItemSort[i].count), 5, "0")..invItemSort[i].name
+                if order == 'ascending' then
+                    if firstItem[1] > fullWeight then
+                        firstItem[1] = fullWeight
+                        firstItem[2] = i
+                    end
+                else
+                    if firstItem[1] < fullWeight then
+                        firstItem[1] = fullWeight
+                        firstItem[2] = i
+                    end
+                end
+            end
+        end
+        return firstItem[2]
+    end
+
+
+    if sortType == 'weight' then 
+        local firstItem = {'~',0}
+            if order ~= 'ascending' then
+                firstItem[1] = '!'
+            end
+        for i = currentIndex,highestIndex do
+            if invItemSort[i] == nil then
+            else
+                local fullWeight = acutil.leftPad(tostring(invItemSort[i].weight * invItemSort[i].count), 5, "0")..invItemSort[i].name
                 if order == 'ascending' then
                     if firstItem[1] > fullWeight then
                         firstItem[1] = fullWeight
@@ -143,14 +194,14 @@ function SORTPLUS_SORTER(invItemSort,currentIndex,highestIndex,sortType,order)
     end
 
     if sortType == 'itemweight' then 
-        local firstItem = {999999,0}
+        local firstItem = {'~',0}
             if order ~= 'ascending' then
-                firstItem[1] = 0
+                firstItem[1] = '!'
             end
         for i = currentIndex,highestIndex do
             if invItemSort[i] == nil then
             else
-                local fullWeight = invItemSort[i].weight
+                local fullWeight = acutil.leftPad(tostring(invItemSort[i].weight), 5, "0")..invItemSort[i].name
                 if order == 'ascending' then
                     if firstItem[1] > fullWeight then
                         firstItem[1] = fullWeight
@@ -215,6 +266,30 @@ function SORTPLUS_SORTER(invItemSort,currentIndex,highestIndex,sortType,order)
         end
         return firstItem[2]
     end
+    if sortType == 'icon' then 
+
+        local firstItem = {'~',0}
+            if order ~= 'ascending' then
+                firstItem[1] = '!'
+            end
+        for i = currentIndex,highestIndex do
+            if invItemSort[i] == nil then
+            else
+                if order == 'ascending' then
+                    if firstItem[1] > invItemSort[i].icon then
+                        firstItem[1] = invItemSort[i].icon
+                        firstItem[2] = i
+                    end
+                else
+                    if firstItem[1] < invItemSort[i].icon then
+                        firstItem[1] = invItemSort[i].icon
+                        firstItem[2] = i
+                    end
+                end
+            end
+        end
+        return firstItem[2]
+    end
 end
 
 
@@ -251,6 +326,11 @@ function SORT_ITEM_INVENTORY_HOOKED()
     scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","name","descending");
     ui.AddContextMenuItem(context, 'By Name (Descending)', scpScp);   
 
+    scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","stacksize","ascending");
+    ui.AddContextMenuItem(context, 'By Stack Size (Ascending)', scpScp); 
+    scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","stacksize","descending");
+    ui.AddContextMenuItem(context, 'By Stack Size (Descending)', scpScp);
+
     scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","weight","ascending");
     ui.AddContextMenuItem(context, 'By Stack Weight (Ascending)', scpScp); 
     scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","weight","descending");
@@ -270,6 +350,26 @@ function SORT_ITEM_INVENTORY_HOOKED()
     ui.AddContextMenuItem(context, 'By Grade (Ascending)', scpScp); 
     scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","grade","descending");
     ui.AddContextMenuItem(context, 'By Grade (Descending)', scpScp); 
+
+    scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","icon","ascending");
+    ui.AddContextMenuItem(context, 'By Icon (Ascending)', scpScp); 
+    scpScp = string.format("SORT_INVENTORY_BY('%s','%s')","icon","descending");
+    ui.AddContextMenuItem(context, 'By Icon (Descending)', scpScp); 
+
+
+    scpScp = "SORT_LOCKED_TOGGLE()";
+    if settings.sortLocked then
+        ui.AddContextMenuItem(context, 'Sort locked items: on', scpScp); 
+    else
+        ui.AddContextMenuItem(context, 'Sort locked items: off', scpScp); 
+    end
     ui.OpenContextMenu(context);
+end
+
+function SORT_LOCKED_TOGGLE()
+
+settings.sortLocked = not settings.sortLocked
+ASSORTMENT_SAVESETTINGS()
+
 end
 
