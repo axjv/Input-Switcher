@@ -21,7 +21,7 @@ end
 
 function ASSORTMENT_SAVESETTINGS()
     table.sort(settings)
-    acutil.saveJSON("../addons/ASSORTMENT/settings.json", settings);
+    acutil.saveJSON("../addons/assortment/settings.json", settings);
 end
 
 function ASSORTMENT_ON_INIT(addon,frame)
@@ -109,6 +109,7 @@ function SORT_INVENTORY_BY(type,order)
                 end
             end
         end
+        UPDATE_INV_LIST(ui.GetFrame('inventory'), slotset)
     end
 end
 
