@@ -3,8 +3,10 @@ local effectFrame = nil
 local timer = imcTime.GetAppTime()
 local timeElapsed = 0
 local lowMode = 0
-local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off'}
-CHAT_SYSTEM('SFX Toggle loaded. Commands:{nl}/effect{nl}/effect thresh <t1> <t2> <t3>{nl}/effect players <num>{nl}/effect mobs <num>')
+local effectMode = {'{#00cc00}on','{#cccc00}low','{#cc0000}off','{#cc0000}BOSS'}
+local bossMode = false
+local hiddenFrames = {}
+CHAT_SYSTEM('SFX Toggle loaded. Commands:{nl}/effect{nl}/effect thresh <t1> <t2> <t3>{nl}/effect players <num>{nl}/effect mobs <num>{nl}/effect boss')
 
 function SFXTOGGLE_ON_INIT(addon, frame)
 	frame:ShowWindow(1);
@@ -59,11 +61,45 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
         effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
     end
     effectFrame:ShowWindow(1)
+    if bossMode then
+        for i = 0,200 do
+            local charbaseinfo = ui.GetFrame('charbaseinfo1_'..i)
+            if charbaseinfo ~= nil then
+                if charbaseinfo:IsVisible() == 1 then
+                    table.insert(hiddenFrames,'charbaseinfo1_'..i)
+                    charbaseinfo:ShowWindow(0)
+                end
+            end
+        end
+    local selectedObjects, selectedObjectsCount = SelectObject(GetMyPCObject(), 1000000, 'ALL');
+    for i = 1, selectedObjectsCount do
+        local handle = GetHandle(selectedObjects[i]);
 
+        if handle ~= nil then
+            if info.IsPC(handle) == 1 then
+                local shopFrame = ui.GetFrame('SELL_BALLOON_'..handle)
+                if shopFrame ~= nil then
+                    if shopFrame:IsVisible() == 1 then
+                        table.insert(hiddenFrames,'SELL_BALLOON_'..handle)
+                        shopFrame:ShowWindow(0)
+                    end
+                end
+            end
+        end
+    end
+
+    end
     if timeElapsed > 3 then
         timeElapsed = 0
         timer = imcTime.GetAppTime()
         local fpsnumber = tonumber(argStr)
+        if bossMode then
+            imcperfOnOff.EnableIMCEffect(0);
+            imcperfOnOff.EnableEffect(1);
+            effectSwitch = -1
+            SET_EFFECT_MODE(effectSwitch)
+            return;
+        end
         -- enter no effects below thresh 1
         if fpsnumber < settings.thresh[1] and lowMode ~= 2 then
             effectSwitch = 0
@@ -104,38 +140,49 @@ function FPS_SFXTOGGLE(frame, msg, argStr, argNum)
 end
 
 function SET_EFFECT_MODE(effectSwitch)
+    if bossMode then
+        graphic.SetDrawActor(-1)
+        graphic.SetDrawMonster(30)
+
+    end
     graphic.EnableFastLoading(1)
     if effectSwitch == 0 then
         graphic.SetDrawActor(settings.players)
         graphic.SetDrawMonster(settings.mobs)
-    else
+    elseif effectSwitch == 1 then
         graphic.SetDrawActor(100)
         graphic.SetDrawMonster(100)
     end
     if effectFrame ~= nil then
-        effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+        if effectSwitch == -1 then
+            effectText:SetText('{@st41}{s18}Effects: '..effectMode[4])
+        else
+            effectText:SetText('{@st41}{s18}Effects: '..effectMode[lowMode+1])
+        end
     end
-    imcperfOnOff.EnableDeadParts(effectSwitch);
-    
+    local effect = effectSwitch
+    if effect == -1 then effect = 0 end
+
+    imcperfOnOff.EnableDeadParts(effect);    
     graphic.EnableBlur(0);
-    -- geScene.option.SetShadowMapSize(effectSwitch);
-    -- geScene.option.SetUseSSAO(effectSwitch);
-    -- geScene.option.SetSSAOMethod(effectSwitch);
-    -- geScene.option.SetUseCharacterWaterReflection(effectSwitch);
-    -- geScene.option.SetUseBGWaterReflection(effectSwitch);
-    -- geScene.option.SetUseShadowMap(effectSwitch);
-    -- graphic.ApplyGammaRamp(effectSwitch);
-    graphic.EnableBloom(effectSwitch);
-    graphic.EnableCharEdge(effectSwitch);
-    graphic.EnableDepth(effectSwitch);
-    graphic.EnableFXAA(effectSwitch);
-    graphic.EnableGlow(effectSwitch);
-    graphic.EnableHighTexture(effectSwitch);
-    graphic.EnableSharp(effectSwitch);
-    graphic.EnableSoftParticle(effectSwitch);
-    graphic.EnableStencil(effectSwitch);
-    graphic.EnableWater(effectSwitch);
-    graphic.EnableHighTexture(effectSwitch);  
+    -- geScene.option.SetShadowMapSize(effect);
+    -- geScene.option.SetUseSSAO(effect);
+    -- geScene.option.SetSSAOMethod(effect);
+    -- geScene.option.SetUseCharacterWaterReflection(effect);
+    -- geScene.option.SetUseBGWaterReflection(effect);
+    -- geScene.option.SetUseShadowMap(effect);
+    -- graphic.ApplyGammaRamp(effect);
+    graphic.EnableBloom(effect);
+    graphic.EnableCharEdge(effect);
+    graphic.EnableDepth(effect);
+    graphic.EnableFXAA(effect);
+    graphic.EnableGlow(effect);
+    graphic.EnableHighTexture(effect);
+    graphic.EnableSharp(effect);
+    graphic.EnableSoftParticle(effect);
+    graphic.EnableStencil(effect);
+    graphic.EnableWater(effect);
+    graphic.EnableHighTexture(effect);  
 end
 
 function SFX_CHAT_CMD(command)
@@ -145,6 +192,18 @@ function SFX_CHAT_CMD(command)
     else
         settings.enable = math.abs(settings.enable - 1)
         return SFX_TOGGLE()
+    end
+    if cmd == 'boss' then
+        bossMode = not bossMode
+        if bossMode then
+            SET_EFFECT_MODE(-1)
+            return ui.AddText('SystemMsgFrame','Boss mode enabled.')
+        else
+            effectSwitch = 0
+            SFX_SHOW_HIDDEN_FRAMES()
+            SET_EFFECT_MODE(effectSwitch)
+            return ui.AddText('SystemMsgFrame','Boss mode disabled.')
+        end
     end
     if cmd == 'thresh' then
         local t1 = tonumber(table.remove(command, 1))
@@ -164,7 +223,7 @@ function SFX_CHAT_CMD(command)
             return SFXTOGGLE_SAVESETTINGS()
         end
     end
-    CHAT_SYSTEM('Invalid command.{nl}Available commands: /effect - toggles effect automation{nl}/effect thresh <thresh1> <thresh2> <thresh3> - sets cutoff for no effects, low effects, and full effects{nl}/effect players <num> - sets number of players to draw on low effects{nl}/effect mobs <num> - sets number of mobs to draw on low effects{nl}')
+    CHAT_SYSTEM('Invalid command.{nl}Available commands: /effect - toggles effect automation{nl}/effect thresh <thresh1> <thresh2> <thresh3> - sets cutoff for no effects, low effects, and full effects{nl}/effect players <num> - sets number of players to draw on low effects{nl}/effect mobs <num> - sets number of mobs to draw on low effects{nl}/effect boss - toggles boss mode')
     CHAT_SYSTEM('Current Settings{nl}effect: '..settings.enable..'{nl}thresh: '..settings.thresh[1]..', '..settings.thresh[2]..', '..settings.thresh[3]..'{nl}players: '..settings.players..'{nl}mobs: '..settings.mobs)
     SFXTOGGLE_SAVESETTINGS()
     return;
@@ -172,12 +231,22 @@ end
 
 function SFX_TOGGLE()
     if settings.enable == 0 then
-        CHAT_SYSTEM('Effect automation off.')
+        ui.AddText('SystemMsgFrame','Effect automation off.')
         imcperfOnOff.EnableIMCEffect(1);
         imcperfOnOff.EnableEffect(1);
         SET_EFFECT_MODE(1)
     else
-        CHAT_SYSTEM('Effect automation on.')
+        ui.AddText('SystemMsgFrame','Effect automation on.')
     end
     return SFXTOGGLE_SAVESETTINGS()
+end
+
+function SFX_SHOW_HIDDEN_FRAMES()
+    for k,v in pairs(hiddenFrames) do
+        local frame = ui.GetFrame(v)
+        if frame ~= nil then
+            frame:ShowWindow(1)
+        end
+    end
+    hiddenFrames = {}
 end
