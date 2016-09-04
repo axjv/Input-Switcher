@@ -74,7 +74,7 @@
 		"name" : "SFX Toggle",
 		"file" : "sfxtoggle",
 		"extension" : "ipf",
-		"fileVersion" : "v0.1.1",
+		"fileVersion" : "v0.1.2",
 		"releaseTag" : "tangerine",
 		"unicode" : "⛄",
 		"description" : "Automatically change graphics settings based on fps. /effect to toggle, /effect help for more commands.",
