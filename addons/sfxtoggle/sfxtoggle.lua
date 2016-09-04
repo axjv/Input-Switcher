@@ -201,6 +201,8 @@ function SFX_CHAT_CMD(command)
         else
             effectSwitch = 0
             SFX_SHOW_HIDDEN_FRAMES()
+            imcperfOnOff.EnableIMCEffect(1)
+            imcperfOnOff.EnableEffect(1);
             SET_EFFECT_MODE(effectSwitch)
             return ui.AddText('SystemMsgFrame','Boss mode disabled.')
         end
