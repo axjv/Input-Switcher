@@ -28,6 +28,8 @@ def access_spreadsheet():
     wks = gc.open("Yggdrasil Boss Timers").sheet1
     print('open sheet')
     bossnames = wks.col_values(1)
+    mapnames = wks.col_values(3)
+    channels = wks.col_values(4)
     print('bossnames')
     if fn == 'report' or fn == 'manualreport':
         print('go')
@@ -49,13 +51,18 @@ def access_spreadsheet():
 
         for i in range(len(bossnames)):
             if bossname == bossnames[i]:
-                wks.update_cell(i+1,2,time)
-                wks.update_cell(i+1,3,mapname)
-                wks.update_cell(i+1,4,channel)
-                wks.update_cell(i+1,5,user)
-                bossFound = 1
-                print('update')
-                break
+                print(channel)
+                print(channels[i])
+                if channel != channels[i] or mapname != mapnames[i]:
+                    pass
+                else:
+                    wks.update_cell(i+1,2,time)
+                    wks.update_cell(i+1,3,mapname)
+                    wks.update_cell(i+1,4,channel)
+                    wks.update_cell(i+1,5,user)
+                    bossFound = 1
+                    print('update')
+                    break
 
         if bossFound == 0:
             for i in range(len(bossnames)):
@@ -74,8 +81,6 @@ def access_spreadsheet():
     status.write('refreshing')
     status.close()
     times = wks.col_values(2)
-    mapnames = wks.col_values(3)
-    channels = wks.col_values(4)
     users = wks.col_values(5)
     bossData = []
 

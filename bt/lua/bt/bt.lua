@@ -43,7 +43,10 @@ function BOSS_TIMER_TARGET_UPDATE()
     elseif bossTimerSync['complete'] == 1 then
         BOSS_TIMER_UPDATE_SYNC('complete')
     end
-
+    if session.world.IsIntegrateServer() or session.world.IsIntegrateIndunServer() then
+        print('instance')
+        return;
+    end
     local handle = session.GetTargetHandle()
     -- if handle == 0 then
     for bossName, bossData in pairs(bossList) do
