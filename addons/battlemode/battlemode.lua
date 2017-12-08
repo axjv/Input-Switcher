@@ -79,7 +79,7 @@ function CREATE_BATTLE_MODE_FRAME()
         bmToggleButton['button']:SetSkinName("quest_box");
 
         bmToggleButton['button']:ShowWindow(1)
-        bmToggleButton['button']:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm')");
+        bmToggleButton['button']:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_LBUTTON_UP");
     end
     if battleModeStatus == 0 then
         bmToggleButton['button']:SetText("{@st41}{#ff0000}{s18}bm off")
@@ -88,6 +88,10 @@ function CREATE_BATTLE_MODE_FRAME()
     end
 
     return battleframe
+end
+
+function BATTLEMODE_LBUTTON_UP()
+    ui.Chat("/bm")
 end
 
 function SET_FRAME_HITTEST()
@@ -168,20 +172,23 @@ function BATTLEMODE_CONFIG(configState)
 end
 
 function BATTLEMODE_CONFIG_UPDATE()
-    bmButton:SetEventScript(ui.RBUTTONUP, "ui.Chat('/bm config')")
+    bmButton:SetEventScript(ui.RBUTTONUP, "BATTLEMODE_RBUTTON_UP")
     local curFrame = ui.GetFocusFrame()
     if curFrame ~= nil then
         if curFrameName ~= curFrame:GetName() and curFrame:GetName() ~= 'BATTLEMODE_CONTEXT' then
             contextFrame:SetPos(curFrame:GetX()+curFrame:GetWidth()/2-contextFrame:GetWidth()/2,curFrame:GetY()+curFrame:GetHeight()/2-contextFrame:GetHeight()/2)
             contextFrame:ShowWindow(1)
             contextFrame:EnableHitTest(1)
+
             if settings.blacklist[curFrame:GetName()] == nil then
                 bmButton:SetText('{#009900}'..curFrame:GetName())
-                bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm blacklist "..curFrame:GetName().."')");
+                bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_BLACKLIST");
             else
                 bmButton:SetText('{#ff0000}'..curFrame:GetName())
-                bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm whitelist "..curFrame:GetName().."')");
+                bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_WHITELIST");
             end
+            bmButton:SetEventScriptArgString(ui.LBUTTONUP, curFrame:GetName());
+
             contextFrame:Resize(bmButton:GetWidth(),contextFrame:GetHeight())
             curFrameName = curFrame:GetName()
             
@@ -194,17 +201,31 @@ function BATTLEMODE_CONFIG_UPDATE()
                 contextFrame:ShowWindow(1)
                 contextFrame:EnableHitTest(1)
                 contextFrame:SetPos(quickSlot:GetX()+quickSlot:GetWidth()/2-contextFrame:GetWidth()/2,quickSlot:GetY()+quickSlot:GetHeight()/2-contextFrame:GetHeight()/2)
+
                 if settings.blacklist['quickslotnexpbar'] == nil then
                     bmButton:SetText('{#009900}quickslotnexpbar')
-                    bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm blacklist quickslotnexpbar')");
+                    bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_BLACKLIST");
                 else
                     bmButton:SetText('{#ff0000}quickslotnexpbar')
-                    bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm whitelist quickslotnexpbar')");
+                    bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_WHITELIST");
                 end
+                bmButton:SetEventScriptArgString(ui.LBUTTONUP, curFrameName);
                 contextFrame:Resize(bmButton:GetWidth(),contextFrame:GetHeight())
             end
         end
     end
+end
+
+function BATTLEMODE_RBUTTON_UP()
+    ui.Chat('/bm config')
+end
+
+function BATTLEMODE_CONFIG_LBUTTON_UP_FOR_BLACKLIST(frame, ctrl, frameName)
+    ui.Chat("/bm blacklist "..frameName)
+end
+
+function BATTLEMODE_CONFIG_LBUTTON_UP_FOR_WHITELIST(frame, ctrl, frameName)
+    ui.Chat("/bm whitelist "..frameName)
 end
 
 function TOGGLE_BATTLE_MODE(command)
@@ -230,7 +251,10 @@ function TOGGLE_BATTLE_MODE(command)
         settings.blacklist[framename] = 1
         bmButton:SetText('{#ff0000}'..framename)
         CHAT_SYSTEM('Frame '..framename..' added to blacklist.')
-        bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm whitelist "..framename.."')");
+
+        bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_WHITELIST");
+        bmButton:SetEventScriptArgString(ui.LBUTTONUP, framename);
+
         return BATTLEMODE_SAVESETTINGS()
     end
     if cmd == 'whitelist' then
@@ -240,7 +264,10 @@ function TOGGLE_BATTLE_MODE(command)
                 settings.blacklist[k] = nil
                 bmButton:SetText('{#009900}'..framename)
                 CHAT_SYSTEM('Frame '..framename..' removed from blacklist.')
-                bmButton:SetEventScript(ui.LBUTTONUP, "ui.Chat('/bm blacklist "..framename.."')");
+
+                bmButton:SetEventScript(ui.LBUTTONUP, "BATTLEMODE_CONFIG_LBUTTON_UP_FOR_BLACKLIST");
+                bmButton:SetEventScriptArgString(ui.LBUTTONUP, framename);
+
             end
         end
         return BATTLEMODE_SAVESETTINGS()
